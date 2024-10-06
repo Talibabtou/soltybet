@@ -52,7 +52,7 @@
   animation: clickPulse 0.3s ease-out;
 }
 
-.Rouge, .Bleu {
+.ButtonRed, .ButtonBlue {
   width: 50%;
   height: 60%;
   background: linear-gradient(45deg, #1a1a1a, #2a2a2a);
@@ -75,7 +75,7 @@
   text-align: center;
 }
 
-.Rouge {
+.ButtonRed {
   color: #ff6969;
   border-color: #f54b4b;
   text-shadow:
@@ -87,7 +87,7 @@
   box-shadow: 0 0 10px rgba(245, 75, 75, 0.5);
 }
 
-.Bleu {
+.ButtonBlue {
   color: #6767ff;
   border-color: #3a3adb;
   text-shadow:
@@ -99,7 +99,7 @@
   box-shadow: 0 0 10px rgba(58, 58, 219, 0.5);
 }
 
-.Rouge::before, .Bleu::before {
+.ButtonRed::before, .ButtonBlue::before {
   content: '';
   position: absolute;
   top: -50%;
@@ -117,25 +117,25 @@
   transition: all 0.3s ease;
 }
 
-.Rouge:hover {
+.ButtonRed:hover {
   background: linear-gradient(45deg, #ff9393, #ff5f5f);
   box-shadow: 0 0 20px rgba(245, 75, 75, 0.8);
   animation: neonFlickerRed 1.5s infinite alternate;
   border-color: #f54b4b;
 }
 
-.Bleu:hover {
+.ButtonBlue:hover {
   background: linear-gradient(45deg, #9ea6e0, #6680e6);
   box-shadow: 0 0 20px rgba(58, 58, 219, 0.8);
   animation: neonFlickerBlue 1.5s infinite alternate;
 }
 
-.Rouge:hover::before, .Bleu:hover::before {
+.ButtonRed:hover::before, .ButtonBlue:hover::before {
   top: -100%;
   left: -100%;
 }
 
-.Rouge:active, .Bleu:active {
+.ButtonRed:active, .ButtonBlue:active {
   transform: scale(0.95);
 }
 
@@ -195,7 +195,7 @@
   }
 }
 
-.Rouge-disabled, .Bleu-disabled {
+.ButtonRed-disabled, .ButtonBlue-disabled {
   opacity: 0.5;
   cursor: not-allowed;
   filter: blur(1px);
@@ -203,7 +203,7 @@
 }
 
 @media screen and (max-width: 1124px) {
-  .Rouge, .Bleu {
+  .ButtonRed, .ButtonBlue {
     font-size: 90%;
   }
   .dynred {

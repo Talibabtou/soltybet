@@ -112,6 +112,7 @@ def handle_payout(headers, match, info):
                                          json=data, headers=headers, timeout=10)
             user_response.raise_for_status()
             print(json.dumps(data, indent=2))
+            time.sleep(1)
             asyncio.run(send_info(info, match["m_id"], headers))
             clear_file('/app/history/last_match.json')
             return

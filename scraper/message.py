@@ -8,8 +8,6 @@ import os
 async def send_phase(phase, fighter_red, fighter_blue, total_red, total_blue, match, headers):
     response = requests.post('http://backend:8000/api/ws_token/', headers=headers)
     single_use_token = response.json().get('token')
-    print(f"Debug: WS token response status: {response.status_code}")
-    print(f"Debug: WS token response content: {response.text}")
     ws_url = f"wss://solty.bet/ws/phase/?token={single_use_token}"
     m_id = match["m_id"] if match else None
     message = {

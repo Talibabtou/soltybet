@@ -21,7 +21,7 @@ const Navbar = () => {
  const menuRef = useRef<HTMLDivElement>(null);
  const tickerRef = useRef<HTMLParagraphElement>(null);
 
- const QUICKNODE_RPC = process.env.REACT_APP_RPC_URL || 'https://devnet.helius-rpc.com/?api-key=2d354e11-d80f-48dd-8a88-30dc8e2e5999';
+ const QUICKNODE_RPC = import.meta.env.VITE_REACT_APP_RPC_URL;
  const QUICKNODE_WSS = QUICKNODE_RPC.replace('https://', 'wss://');
 
  const connection = useRef<Connection | null>(null);

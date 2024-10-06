@@ -36,7 +36,7 @@ const createTokenManager = () => {
   let encryptedJwtRefreshToken: string | null = null;
   let cachedJwtToken: string | null = null;
 
-  const ENCRYPTION_KEY = process.env.REACT_APP_ENCRYPTION_KEY || 'defaultEncryptionKey';
+  const ENCRYPTION_KEY = import.meta.env.VITE_REACT_APP_ENCRYPTION_KEY;
 
   const api = axios.create({
     baseURL: 'https://solty.bet/api',
@@ -114,13 +114,10 @@ const createTokenManager = () => {
     }
   };
 
-  const API_PASSWORD = import.meta.env.VITE_REACT_APP_API_PASSWORD || 'defaultApiPassword';
-  console.log('API_PASSWORD:', API_PASSWORD); // Keep this line for debugging
-
+  const API_PASSWORD = import.meta.env.VITE_REACT_APP_API_PASSWORD;
   return {
     getToken: async (): Promise<string> => {
       try {
-        console.log('Attempting to get token with password:', API_PASSWORD); // Add this line for debugging
         const response = await api.post('/token/', {
           username: 'front',
           password: API_PASSWORD

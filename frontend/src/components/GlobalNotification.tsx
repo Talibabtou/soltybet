@@ -21,7 +21,7 @@ const GlobalNotification: React.FC = () => {
   const { latestMatch } = useMatch();
   const pendingNotificationRef = useRef<number | null>(null);
 
-  const addNotification = useCallback((message: string, backgroundColor: string, type: 'payout' | 'standard' = 'standard', txOut?: string) => {
+  const addNotification = useCallback((message: string, backgroundColor: string, type: 'payout' | 'refund' | 'standard' = 'standard', txOut?: string) => {
     const newNotification: Notification = {
       id: Date.now(),
       message,

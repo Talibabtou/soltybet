@@ -23,6 +23,7 @@ class User(models.Model):
             models.CheckConstraint(check=models.Q(total_payout__gte=0), name='user_check_total_payout_gte_0'),
             models.CheckConstraint(check=models.Q(total_gain__gte=0), name='user_check_total_gain_gte_0'),
         ]
+
 class Fighter(models.Model):
     f_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_index=True)
     name = models.CharField(max_length=100, unique=True)

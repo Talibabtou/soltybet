@@ -41,8 +41,8 @@ const BetButtons = () => {
   const { betData } = useBet();
   const { user, refreshUser } = useContext(UserContext);
   const { latestMatch } = useMatch();
-  const buttonClassBleu = connected ? 'Bleu' : 'Bleu-disabled';
-  const buttonClassRouge = connected ? 'Rouge' : 'Rouge-disabled';
+  const buttonClassBlue = connected ? 'ButtonBlue' : 'ButtonBlue-disabled';
+  const buttonClassRed = connected ? 'ButtonRed' : 'ButtonRed-disabled';
   const [clickedButton, setClickedButton] = useState<string | null>(null);
   const { userHasBet, setUserHasBet } = useUserBet();
 
@@ -222,7 +222,7 @@ const BetButtons = () => {
     <div className="buttons-container">
       <div className='redbox'>
         <button 
-          className={`${buttonClassRouge} ${clickedButton === 'Rouge' ? 'clicked' : ''}`} 
+          className={`${buttonClassRed} ${clickedButton === 'ButtonRed' ? 'clicked' : ''}`} 
           disabled={!connected} 
           onClick={() => handleBet('red')}
         >
@@ -233,7 +233,7 @@ const BetButtons = () => {
       
       <div className='bluebox'>
         <button 
-          className={`${buttonClassBleu} ${clickedButton === 'Bleu' ? 'clicked' : ''}`} 
+          className={`${buttonClassBlue} ${clickedButton === 'ButtonBlue' ? 'clicked' : ''}`} 
           disabled={!connected} 
           onClick={() => handleBet('blue')}
         >

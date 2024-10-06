@@ -1,0 +1,90 @@
+.orderbook {
+  box-sizing: border-box;
+  height: 25vh;
+  color: white;
+  font-family: "Press Start 2P", cursive;
+  position: relative;
+  overflow: hidden;
+}
+
+.orderbook.show-gif {
+  overflow: visible;
+}
+
+.orderbook-inner-container {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+
+.orderbook-left,
+.orderbook-right {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 100%;
+}
+
+.orderbook-right {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.orderbook-right canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.waiting-gif-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow: visible;
+  height: 100%;
+  
+}
+
+.orderbook.show-gif .waiting-gif-container {
+  bottom: -20px;
+  left: -20px;
+}
+
+.fade-in {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.fade-in.visible {
+  opacity: 1;
+}
+
+.loading-donut, .loading-odds {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: 1.2em;
+  color: #ffffff;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.waiting-gif {
+  max-width: 100%;
+  max-height: none;
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+  transition: bottom 0.3s ease;
+  object-fit: contain;
+}

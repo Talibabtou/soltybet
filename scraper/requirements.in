@@ -1,0 +1,11 @@
+Django
+selenium
+webdriver_manager
+channels
+asgiref
+redis
+asyncio
+websockets
+requests
+discord
+python-dotenv

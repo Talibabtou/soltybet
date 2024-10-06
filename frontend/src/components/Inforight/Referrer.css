@@ -1,0 +1,187 @@
+:root {
+  --main-font: "Chakra Petch", sans-serif;
+  --button-font: "Press Start 2P", cursive;
+  --neon-color: #00ffff;
+  --bg-gradient: linear-gradient(45deg, #1a1a1a, #2a2a2a);
+  --hover-bg-gradient: linear-gradient(45deg, #2a2a2a, #3a3a3a);
+}
+
+.divRef {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 50%;
+  width: 100%;
+  padding: 20px;
+}
+
+.AddReferrer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 600px;
+  gap: 20px;
+}
+
+.AddReferrer input {
+  width: 33%;
+  height: 50px;
+  background: var(--bg-gradient);
+  border: 2px solid #3a3a3a;
+  border-radius: 10px;
+  color: var(--neon-color);
+  font-family: var(--main-font);
+  font-size: 100%;
+  text-align: center;
+  letter-spacing: 2px;
+  padding: 0 15px;
+  outline: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 6px rgba(0, 255, 255, 0.2);
+}
+
+.AddReferrer input:focus {
+  border-color: var(--neon-color);
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+}
+
+.AddReferrer input::placeholder {
+  color: #4a4a4a;
+  opacity: 1;
+}
+
+.placeholder-connected::placeholder {
+  color: #008080;
+}
+
+.AddReferrer input:hover {
+  box-shadow: 0 3px 5px rgba(0, 255, 255, 0.3);
+}
+
+.AddReferrer input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+  background: var(--hover-bg-gradient);
+}
+
+@keyframes neonPulse {
+  0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 255, 0.2), 0 0 10px rgba(0, 255, 255, 0.2); }
+  50% { box-shadow: 0 0 15px rgba(0, 255, 255, 0.4), 0 0 15px rgba(0, 255, 255, 0.2); }
+}
+
+.AddReferrer input:not(:disabled) {
+  animation: neonPulse 2s infinite;
+}
+
+.AddedReferrer {
+  font-family: var(--main-font);
+  text-align: center;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.refbutton {
+  width: 40%;
+  max-width: 200px;
+  height: 50px;
+  background: var(--bg-gradient);
+  border: 3px solid var(--neon-color);
+  border-radius: 10px;
+  color: var(--neon-color);
+  font-family: "Press Start 2P", cursive;
+  font-size: 80%;
+  letter-spacing: 1px;
+  text-shadow: 0 0 5px var(--neon-color);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  line-height: 1.2;
+}
+
+.refbutton::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to bottom right,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 50%,
+    transparent 100%
+  );
+  transform: rotate(-45deg);
+  transition: all 0.3s ease;
+}
+
+.refbutton:hover {
+  background: var(--hover-bg-gradient);
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.8);
+  animation: neonFlicker 1.5s infinite alternate;
+  border-color: var(--neon-color);
+}
+
+.refbutton:hover::before {
+  top: -100%;
+  left: -100%;
+}
+
+.refbutton:active {
+  transform: scale(0.95);
+  box-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+}
+
+@keyframes neonFlicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    text-shadow: 
+      0 0 3px var(--neon-color),
+      0 0 8px var(--neon-color),
+      0 0 12px var(--neon-color);
+  }
+  20%, 24%, 55% {
+    text-shadow: none;
+  }
+}
+
+@media screen and (max-width: 1440px) {
+  .AddReferrer input {
+    font-size: 80%;
+    height: 40px;
+  }
+
+  .refbutton {
+    font-size: 60%;
+    height: 40px;
+  }
+
+  .AddedReferrer {
+    font-size: 80%;
+  }
+}
+
+@media screen and (max-width: 1124px) {
+  .AddReferrer input {
+    font-size: 60%;
+    height: 35px;
+  }
+  .refbutton {
+    font-size: 35%;
+    height: 35px;
+  }
+  .AddedReferrer {
+    font-size: 60%;
+  }
+}

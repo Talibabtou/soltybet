@@ -1,0 +1,11 @@
+rpc.json
+discord.json
+.env
+*.tar.gz
+config.json
+last_match_example.json
+match_history.csv
+*.crt
+*.pem
+*.key
+logs

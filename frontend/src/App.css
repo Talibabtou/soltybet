@@ -1,0 +1,113 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  background: linear-gradient(to bottom, #3c045a,#0f0f0f,#0f0f0f, #0f0f0f,#0f0f0f, #0f0f0f, #0f0f0f);
+  min-width: 800px !important;
+  min-height: 650px !important;
+  overflow: auto;
+}
+
+body, html, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 650px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.main-content {
+  display: flex;
+  flex: 1;
+  width: 100%;
+}
+.sidebar {
+  text-align: center;
+  flex: 0.6;
+  
+  color: #fff;
+  height: 64vh;
+}
+
+.content {
+  flex: 1;
+  height: 64vh;
+}
+
+.desktop-only-message {
+  display: none;
+}
+
+@media screen and (max-width: 860px) {
+  .app-content {
+    display: none;
+  }
+  .desktop-only-message {
+    display: flex;
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    font-size: 1.2rem;
+    color: black;
+    background-color: #f0f0f0;
+  }
+}
+
+@media screen and (max-width: 1200px) {
+  .chat {
+    height: 50vh;
+  }
+  .content {
+    flex: 1;
+    height: 55vh;
+  }
+  .sidebar {
+    height: 55vh;
+  }
+  .orderbook {
+    height: 22vh;
+  }
+  .betcontent {
+    height: 22vh;
+  }
+  .Inforight {
+    height: 22vh;
+  }
+}
+
+.chat {
+  padding-left: 20px;
+  padding-right: 20px;
+  flex: 0.6;
+  height: 64vh;
+}
+
+.orderbook {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex: 0.6;
+  padding: 20px;
+}
+
+.betbox {
+  flex: 1;
+  padding: 0px;
+}
+
+.betcontent {
+  height: 25vh;
+  display: flex;
+  flex-direction: row;
+}
+
+.Inforight {
+  flex : 0.6;
+  padding : 20px;
+  text-align: center;
+}

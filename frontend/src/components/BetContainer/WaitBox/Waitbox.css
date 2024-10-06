@@ -1,0 +1,186 @@
+.waitbox {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.info-container {
+  width: 95%;
+  height: 20%; 
+  display: flex;
+  margin-left: auto;
+  margin-right: auto;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.wait {
+  width: 95%;
+  height: 70%;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: white;
+}
+
+.versus {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: flex-start;
+  width: 100%;
+  position: relative;
+}
+
+.fighter-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 45%;
+}
+
+.Red, .Blue {
+  width: 90%;
+  height: 100%;
+  padding: 5px;
+  font-size: 100%;
+  font-family: "Press Start 2P", cursive;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: 3px solid;
+  border-radius: 10px;
+  background: linear-gradient(45deg, #1a1a1a, #2a2a2a);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.Red {
+  color: #ff6969;
+  border-color: #f54b4b;
+  text-shadow: 
+      -1px -1px 0 #000,  
+      1px -1px 0 #000,
+      -1px 1px 0 #000,
+      1px 1px 0 #000,
+      0 0 5px #f54b4b;
+  box-shadow: 0 0 10px rgba(245, 75, 75, 0.5);
+}
+
+.Blue {
+  color: #6767ff;
+  border-color: #3a3adb;
+  text-shadow: 
+      -1px -1px 0 #000,
+      1px -1px 0 #000,
+      -1px 1px 0 #000,
+      1px 1px 0 #000,
+      0 0 5px #3a3adb;
+  box-shadow: 0 0 10px rgba(58, 58, 219, 0.5);
+}
+
+.Red::before, .Blue::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+      to bottom right,
+      rgba(255, 255, 255, 0.3) 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 50%,
+      transparent 100%
+  );
+  transform: rotate(-45deg);
+  transition: all 0.3s ease;
+}
+
+.Red:hover {
+  box-shadow: 0 0 20px rgba(245, 75, 75, 0.8);
+}
+.Blue:hover {
+  box-shadow: 0 0 20px rgba(58, 58, 219, 0.8);
+}
+
+.Red:hover {
+  background: linear-gradient(45deg, #ff9393, #ff5f5f);
+}
+
+.Blue:hover {
+  background: linear-gradient(45deg, #9ea6e0, #6680e6);
+}
+
+.Red:hover::before, .Blue:hover::before {
+  top: -100%;
+  left: -100%;
+}
+
+.Red:active, .Blue:active {
+  transform: scale(0.95);
+}
+
+.red-expected, .blue-expected {
+  font-size: 80%;
+  margin-top: 10px;
+}
+
+.red-expected {
+  color: #ff6969;
+}
+
+.blue-expected {
+  color: #6767ff;
+}
+
+.cote {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 10px;
+}
+
+.cote-image {
+  width: 20%;
+  height: auto;
+  max-width: 100%;
+}
+
+@media screen and (max-width: 1124px) {
+  .fighter-container {
+      width: 30%;
+  }
+  .Red, .Blue {
+      font-size: 90%;
+      width: 100%;
+      height: 90%;
+  }
+  .red-expected, .blue-expected {
+      font-size: 70%;
+  }
+}
+
+@media screen and (max-width: 1024px) {
+  .fighter-container {
+      width: 30%;
+  }
+  .Red, .Blue {
+      font-size: 70%;
+      height: 90%;
+      width: 100%;
+  }
+  .red-expected, .blue-expected {
+      font-size: 60%;
+  }
+}

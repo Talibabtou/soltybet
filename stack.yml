@@ -1,0 +1,276 @@
+version: '3.8'
+#add all the secrets and env variables to the .env file
+# set -a; . ./.env; set +a
+# docker network create --driver overlay --attachable solty
+
+# docker service create --name myservice --cap-drop ALL --cap-add specific_capability myimage
+services:
+  db:
+    image: postgres:latest
+    volumes:
+      - swarm_postgres:/var/lib/postgresql/data
+    env_file: 
+      - .env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_pass
+    secrets:
+      - db_pass
+    networks:
+      - solty
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+
+  pgadmin: #good
+    image: dpage/pgadmin4:latest
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_pass
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_MAIL}
+      - PGADMIN_DEFAULT_PASSWORD_FILE=/run/secrets/pgadmin_pass
+    secrets:
+      - pgadmin_pass
+    ports:
+      - "5050:80"
+    volumes:
+      - swarm_pgadmin:/var/lib/pgadmin
+      - ./pgadmin_servers.json:/pgadmin4/servers.json
+    networks:
+      - solty
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+      update_config:
+        parallelism: 1
+        delay: 30s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+
+  backend:
+    image: localhost:5742/backend:0.0.1
+    volumes:
+      - backend_static:/app/staticfiles
+    env_file:
+      - .env
+    secrets:
+      - db_pass
+      - django_pass
+      - front_pass
+      - scraper_pass
+      - certificate
+      - key
+      - ca_certificate
+      - discord
+    networks:
+      - solty
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python manage.py check --database default || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    hostname: backend
+
+  scraper: #good
+    image: localhost:5742/scraper:0.0.1
+    command: sh -c "python main.py"
+    secrets:
+      - scraper_pass
+      - discord
+    volumes:
+      - ./oracle/history:/app/history
+    networks:
+      - solty
+    env_file:
+      - .env
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+      update_config:
+        parallelism: 1
+        delay: 30s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    
+  oracle: #good
+    image: localhost:5742/oracle:0.0.1
+    command: sh -c "python python/main.py"
+    secrets:
+      - keypair
+      - discord
+    networks:
+      - oracle
+    volumes:
+      - ./oracle/history:/app/history
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+      update_config:
+        parallelism: 1
+        delay: 30s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+  
+  frontend:
+    image: localhost:5742/frontend:0.0.1
+    volumes:
+      - ./frontend/src:/code/src
+      - /code/node_modules
+      - backend_static:/usr/share/nginx/html/backend
+    secrets:
+      - source: certificate
+        target: /etc/nginx/ssl/certificate.crt
+      - source: key
+        target: /etc/nginx/ssl/private.key
+    env_file:
+      - .env
+    environment:
+      - REACT_APP_API_PASSWORD=${REACT_APP_API_PASSWORD}
+      - REACT_APP_RPC_URL=${REACT_APP_RPC_URL}
+      - REACT_APP_RPC_WSS=${REACT_APP_RPC_WSS}
+    dns:
+      - 127.0.0.11
+    networks:
+      - solty
+    ports:
+      - "443:443"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+      update_config:
+        parallelism: 1
+        delay: 30s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+  
+  redis:
+    image: redis:7.4-alpine
+    command: redis-server --tls-port 6380 --port 0 --tls-cert-file /run/secrets/certificate --tls-key-file /run/secrets/key --tls-ca-cert-file /run/secrets/ca_certificate --tls-auth-clients no
+    networks:
+      - solty
+    volumes:
+      - swarm_redis:/data
+    secrets:
+      - certificate
+      - key
+      - ca_certificate
+    ulimits:
+      nofile:
+        soft: 50000
+        hard: 100000
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+      update_config:
+        parallelism: 1
+        delay: 30s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+  
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - swarm_grafana:/var/lib/grafana
+    ports:
+      - "3468:3000"
+    networks:
+      - solty
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/graf_pass
+    secrets:
+      - graf_pass
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+      update_config:
+        parallelism: 1
+        delay: 30s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+        delay: 50s
+        max_attempts: 3
+        window: 120s
+
+volumes:
+  swarm_postgres:
+  swarm_pgadmin:
+  swarm_redis:
+  swarm_grafana:
+  backend_static:
+
+secrets:
+  db_pass:
+    external: true
+  pgadmin_pass: 
+    external: true
+  graf_pass:
+    external: true
+  django_pass: 
+    external: true
+  front_pass:
+    external: true
+  scraper_pass:
+    external: true
+  certificate:
+    external: true
+  key:
+    external: true
+  ca_certificate:
+    external: true
+  rpc:
+    external: true
+  keypair:
+    external: true
+  discord:
+    external: true
+    
+networks:
+  solty:
+    external: true
+  oracle:
+    external: true

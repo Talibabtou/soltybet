@@ -1,0 +1,35 @@
+.infobet {
+    width: 100%;
+    display: flex; /* Assurez-vous que les éléments sont bien alignés */
+    align-items: center;
+    justify-content: center;
+    height: 100%; 
+    color: #fff;
+    transition: background-color 0.3s; /* Transition douce pour le changement de couleur */
+}
+
+.infobet.red {
+    background-color: #DC3362;
+    height: 100%;
+    border-radius: 10px;
+   
+    border-color: #DC3362;
+     /* Couleur pour l'équipe rouge */
+}
+
+.infobet.blue {
+    background-color: #5873ec; /* Couleur pour l'équipe bleue */
+    height: 100%;
+    border-radius: 10px;
+    
+    border-color: #5873ec;
+}
+
+@media screen and (max-width: 1024px) {
+    .infobet {
+        
+        font-size: 90%;
+    }
+
+}
+

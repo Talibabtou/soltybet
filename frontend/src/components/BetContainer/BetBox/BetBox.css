@@ -1,0 +1,32 @@
+.betbox {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-container {
+  height: 40%;
+}
+
+.bet {
+  width: 95%;
+  
+  height: 75%;
+  margin:auto;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.info-container {
+  width: 95%;
+  display: flex;
+  margin-left: auto;
+  margin-right: auto;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 15%; 
+  font-family: 'Orbitron', sans-serif;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+}

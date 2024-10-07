@@ -8,6 +8,8 @@ import json
 BASE_DIR = Path(__file__).resolve().parent.parent
 domain_name = os.environ.get('DOMAIN_NAME', 'backend')
 
+LOGS_DIR = BASE_DIR / 'logs'
+
 def read_secret(secret_name):
     try:
         with open(f'/run/secrets/{secret_name}') as f:
@@ -77,7 +79,7 @@ CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_HTTPONLY = True
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=20),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -199,7 +201,7 @@ LOGGING = {
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'error.log',
+            'filename': os.path.join(LOGS_DIR, 'error.log'),
             'formatter': 'simple',
             'level': 'ERROR',
         },
@@ -224,30 +226,40 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file', 'webhook_warning', 'webhook_error'],
+            'handlers': ['console', 'file', 'webhook_info', 'webhook_warning', 'webhook_error'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,
         },
         'django.request': {
-            'handlers': ['console', 'file', 'webhook_warning', 'webhook_error'],
+            'handlers': ['console', 'file', 'webhook_info', 'webhook_warning', 'webhook_error'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,
         },
         'backend': {
-            'handlers': ['console', 'file', 'webhook_warning', 'webhook_error'],
+            'handlers': ['console', 'file', 'webhook_info', 'webhook_warning', 'webhook_error'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,
         },
         'datalog': {
-            'handlers': ['console'],
+            'handlers': ['console', 'webhook_info', 'webhook_warning', 'webhook_error'],
             'level': 'INFO',
             'propagate': False,
         },
         '': {
             'handlers': ['file', 'console', 'webhook_warning', 'webhook_error'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,
         },
+        'jwt_auth': {
+            'handlers': ['console', 'file', 'webhook_warning', 'webhook_error'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
+    'root': {
+        'handlers': ['file', 'console', 'webhook_warning', 'webhook_error'],
+        'level': 'WARNING',
+				'propagate': False,
     },
 }
 

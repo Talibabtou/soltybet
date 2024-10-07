@@ -190,7 +190,6 @@ class UserViewSet(BaseViewSet, mixins.UpdateModelMixin):
             raise PermissionDenied("API permission denied")
         m_id = request.query_params.get('m_id')
         wallet = request.query_params.get('wallet')
-        logger.info(f"Actual wins data request: m_id={m_id}, wallet={wallet}")
         if not m_id or not wallet:
             logger.warning("Bad request: m_id and wallet are required")
             return Response({'error': 'm_id and wallet are required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -210,7 +209,6 @@ class UserViewSet(BaseViewSet, mixins.UpdateModelMixin):
                 'tx_out': tx_out,
                 'invalidMatch': invalid_match
             }
-            logger.info(f"Actual wins data response: {response_data}")
             return Response(response_data)
         except User.DoesNotExist:
             logger.error(f"User not found: wallet={wallet}")
@@ -224,7 +222,6 @@ class UserViewSet(BaseViewSet, mixins.UpdateModelMixin):
         if request.user.username.strip() != 'scrap':
             raise PermissionDenied("API permission denied")
         data = request.data
-        logger.info(f"user_payout: {data}")
         try:
             with transaction.atomic():
                 for user_data in data:
@@ -339,7 +336,7 @@ class MatchViewSet(BaseViewSet, mixins.UpdateModelMixin):
 
     @action(detail=False, methods=['get'])
     def stats(self, request):
-        if request.user.username.strip() != 'grafana':
+        if request.user.username.strip() != 'stats':
             raise PermissionDenied("API permission denied")
         num_matches = Match.objects.count()
         return Response({"num_matches": num_matches}, status=status.HTTP_200_OK)
@@ -563,15 +560,15 @@ class FighterViewSet(BaseViewSet, mixins.UpdateModelMixin):
 
     @action(detail=False, methods=['get'])
     def stats(self, request):
-        if request.user.username.strip() != 'grafana':
+        if request.user.username.strip() != 'stats':
             raise PermissionDenied("API permission denied")
         top_fighter = Fighter.objects.order_by('-elo').first()
         bottom_fighter = Fighter.objects.order_by('elo').first()
         num_fighters = Fighter.objects.count()
         return Response({
-            "top_fighter": FighterSerializer(top_fighter).data,
-            "bottom_fighter": FighterSerializer(bottom_fighter).data,
-            "num_fighters": num_fighters
+            "top_fighter": FighterSerializer(top_fighter).data if top_fighter else {},
+            "bottom_fighter": FighterSerializer(bottom_fighter).data if bottom_fighter else {},
+            "num_fighters": num_fighters or 0
         }, status=status.HTTP_200_OK)
 
 class GlobalViewSet(BaseViewSet, mixins.UpdateModelMixin):

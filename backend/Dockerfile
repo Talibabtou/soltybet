@@ -9,6 +9,8 @@ COPY requirements.in /app/
 COPY ./tools/entrypoint.sh /entrypoint.sh
 COPY ./app /app
 
+RUN mkdir -p /app/logs && chmod 777 /app/logs
+
 RUN chmod +x /entrypoint.sh
 
 RUN apk update && apk add --no-cache \

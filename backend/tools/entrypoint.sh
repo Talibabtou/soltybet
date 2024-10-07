@@ -45,8 +45,7 @@ DJANGO_SUPERUSER_USERNAME="${DJANGO_SUPERUSER_USERNAME:-solty}"
 DJANGO_SUPERUSER_PASSWORD=$(read_secret "django_pass")
 FRONT_PASSWORD=$(read_secret "front_pass")
 SCRAPER_PASSWORD=$(read_secret "scraper_pass")
-
-echo $FRONT_PASSWORD
+STATS_PASSWORD=$(read_secret "stats_pass")
 
 # Delete the user to make sure we can create a new one
 python manage.py shell -c 'from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username="admin").delete()'
@@ -69,6 +68,9 @@ python manage.py shell -c "from django.contrib.auth import get_user_model; User 
 
 python manage.py shell -c 'from django.contrib.auth import get_user_model; model = get_user_model(); model.objects.filter(username="front").delete()'
 python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_user(username='front', password='$FRONT_PASSWORD')"
+
+python manage.py shell -c 'from django.contrib.auth import get_user_model; model = get_user_model(); model.objects.filter(username="stats").delete()'
+python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_user(username='stats', password='$STATS_PASSWORD')"
 
 # Checking the environment
 # To be safe run in prod by default

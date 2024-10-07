@@ -14,7 +14,7 @@ const landscapes = [landscape, landscape2, landscape3, landscape4, landscape6, l
 const cancelMessages = [
   "Match nullified due to one-sided betting. All participants will receive a full refund.",
   "Match cancelled due to uneven betting. All bets will be refunded faster than you can say 'Solana'.",
-  "Match nullified: One team's fans must be busy HOLDING. All bets are being airdropped back to your wallet.!",
+  "Match nullified: One team's fans must be busy HODLING. All bets are being airdropped back to your wallet!",
 ];
 
 const storeGifUrlsInLocalStorage = () => {

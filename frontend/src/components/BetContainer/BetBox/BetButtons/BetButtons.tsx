@@ -37,7 +37,7 @@ const BetButtons = () => {
     setPendingBetId 
   } = useTransaction();
   const { publicKey, signTransaction, connected } = useWallet();
-  const { redFighter, blueFighter } = useContext(PhaseContext);
+  const { redFighter, blueFighter, phase } = useContext(PhaseContext);
   const { betData } = useBet();
   const { user, refreshUser } = useContext(UserContext);
   const { latestMatch } = useMatch();

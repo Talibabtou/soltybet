@@ -65,11 +65,11 @@ export const PhaseProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const handleMessage = (dataFromServer: WebSocketMessage) => {
       if (dataFromServer.type === "info") {
         if (dataFromServer.text === "Payout") {
-          console.log("Setting shouldFetchData to true");
+          
           setShouldFetchData(true);
           setPayoutId(dataFromServer.m_id || null);
         } else if (dataFromServer.text === "Refund") {
-          console.log("Setting shouldFetchRefund to true");
+          
           setShouldFetchRefund(true);
           setPayoutId(dataFromServer.m_id || null);
         }

@@ -125,22 +125,22 @@ const GlobalNotification: React.FC = () => {
         const txOut = data.tx_out;
         
         if (refund > 0) {
-          console.log('Adding refund notification:', refund);
+          
           addNotification(`${refund.toFixed(2)} SOL`, '#2596be', 'refund', txOut);
         } else {
-          console.log('No refund to display (refund <= 0)');
+          
         }
       } catch (error) {
         console.error('Error fetching refund data.');
         addNotification('Error fetching refund data', '#D82525');
       } finally {
-        console.log('Setting shouldFetchRefund to false');
+        
         setShouldFetchRefund(false);
       }
     };
 
     if (shouldFetchRefund) {
-      console.log('Triggering fetchRefundData');
+      
       fetchRefundData();
     }
   }, [shouldFetchRefund, user, latestMatch, addNotification, setShouldFetchRefund]);

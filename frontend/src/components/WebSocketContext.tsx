@@ -29,10 +29,10 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        console.log("Page is hidden, disconnecting WebSocket");
+        
         disconnect();
       } else {
-        console.log("Page is visible, reconnecting WebSocket");
+        
         connect();
       }
     };

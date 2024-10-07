@@ -37,7 +37,6 @@ const connectWebSocket = async (onMessage: (data: any) => void): Promise<WebSock
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log("Received WebSocket message:", data);
       onMessage(data);
     };
 

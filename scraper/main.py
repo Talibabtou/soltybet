@@ -13,11 +13,10 @@ TARGET_ROOM_ID = '43201452'
 TARGET_USER_ID = '55853880'
 CHANNEL_NAME = 'saltybet'
 user = 'scrap'
+secret_file = 'scraper_pass'
 
 
 async def twitch_chat_listener():
-    user = 'scrap'
-    secret_file = 'scrap_pass'
     token_data, token_expiry, headers = initialize_token(user, secret_file)
     current_time = None
     fighter_red, fighter_blue, match, total_blue, total_red = None, None, None, None, None

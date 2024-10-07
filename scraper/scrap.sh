@@ -18,7 +18,6 @@ if [ $(($(date +%s) - start_time)) -gt $timeout ]; then
   echo "Timeout waiting for backend"
   exit 1
 fi
-
 echo "Backend is ready!"
 # Run the first script in the background
 python -u stats.py &

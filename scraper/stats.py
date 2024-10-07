@@ -27,11 +27,11 @@ WINNER_ID = int(channel_config['WINNER_ID'])
 LOSERS_ID = int(channel_config['LOSERS_ID'])
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
+user = 'stats'
+secret_file = 'stats_pass'
 
 @client.event
 async def on_ready():
-    user = 'stats'
-    secret_file = 'stats_pass'
     print(f'Logged in as {client.user}')
     token_data, token_expiry, headers = initialize_token(user, secret_file)  # Initialize the token
     print(f'Bot is ready, starting the loop')

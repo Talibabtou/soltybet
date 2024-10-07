@@ -10,7 +10,7 @@ start_time=$(date +%s)
 
 until curl -s -o /dev/null http://${host}:${port}/api/health-check/ || [ $(($(date +%s) - start_time)) -gt $timeout ]; do
   echo "Waiting for backend to be ready..."
-  sleep 2
+  sleep 12
 done
 
 if [ $(($(date +%s) - start_time)) -gt $timeout ]; then

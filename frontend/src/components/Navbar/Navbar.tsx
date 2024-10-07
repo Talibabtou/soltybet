@@ -19,8 +19,8 @@ const Navbar = () => {
  const menuRef = useRef<HTMLDivElement>(null);
  const tickerRef = useRef<HTMLParagraphElement>(null);
 
- const QUICKNODE_RPC = import.meta.env.VITE_REACT_APP_RPC_URL;
- const QUICKNODE_WSS = QUICKNODE_RPC.replace('https://', 'wss://');
+ const RPC_URL = import.meta.env.VITE_REACT_APP_RPC_URL;
+ const RPC_WSS = RPC_URL.replace('https://', 'wss://');
 
  const connection = useRef<Connection | null>(null);
  const subscriptionId = useRef<number | null>(null);
@@ -39,8 +39,8 @@ const Navbar = () => {
 
  useEffect(() => {
   if (connected && publicKey) {
-    connection.current = new Connection(QUICKNODE_RPC, {
-      wsEndpoint: QUICKNODE_WSS,
+    connection.current = new Connection(RPC_URL, {
+      wsEndpoint: RPC_WSS,
       commitment: 'confirmed'
     });
 

@@ -1,6 +1,5 @@
 pandas
-selenium
-webdriver-manager
+websockets
 channels
 asgiref
 redis

@@ -1,7 +1,7 @@
-import requests
+import asyncio
+import websockets
+import re
 import logging
-from scrape import FirefoxDriverManager, wait_next_phase
-from time import sleep
 from message import send_to_discord
 from compute import compute_bets, compute_payouts
 from utils import load_bets, determine_winning_team, is_invalid_match, save_match_history, save_last_match, get_current_block_id
@@ -23,7 +23,54 @@ logging.basicConfig(
 	format='%(asctime)s - %(levelname)s - %(funcName)s - %(message)s'
 )
 
-def handle_bets_open(context: MatchContext):
+TWITCH_WS_URL = 'wss://irc-ws.chat.twitch.tv:443'
+NICK = 'justinfan12345'
+TARGET_ROOM_ID = '43201452'
+TARGET_USER_ID = '55853880'
+CHANNEL_NAME = 'saltybet'
+
+async def twitch_chat_listener(context: MatchContext):
+
+	async with websockets.connect(TWITCH_WS_URL) as websocket:
+		await websocket.send(f'NICK {NICK}')
+		await websocket.send(f'CAP REQ :twitch.tv/tags twitch.tv/commands')
+		await websocket.send(f'JOIN #{CHANNEL_NAME}')
+
+		logging.info(f"Joining channel: #{CHANNEL_NAME}")
+
+		while True:
+			message = await websocket.recv()
+			if message.startswith('PING'):
+				await websocket.send('PONG :tmi.twitch.tv')
+			elif 'PRIVMSG' in message:
+				username = re.search(r'display-name=([^;]+)', message)
+				user_id = re.search(r'user-id=(\d+)', message)
+				room_id = re.search(r'room-id=(\d+)', message)
+				msg = re.search(r'PRIVMSG #\S+ :(.*)', message)
+				if username and user_id and room_id and msg:
+					username = username.group(1)
+					user_id = user_id.group(1)
+					room_id = room_id.group(1)
+					msg = msg.group(1)
+					if user_id == TARGET_USER_ID and room_id == TARGET_ROOM_ID:
+						logging.info(f"Target message: {username}: {msg}")
+						await handle_phase(msg, context)
+
+async def handle_phase(phase_text: str, context: MatchContext):
+	"""Handle the current phase of the match."""
+	if "Bets are OPEN" in phase_text:
+		await handle_bets_open(context)
+		context.current_phase = "Bets are OPEN!"
+	elif "Bets are locked" in phase_text:
+		await handle_bets_locked(context)
+		context.current_phase = "Bets are locked"
+	elif "wins!" in phase_text:
+		await handle_match_over(phase_text, context)
+		context.current_phase = "wins!"
+
+	logging.info(f"Current phase updated to: {context.current_phase}")
+
+async def handle_bets_open(context: MatchContext):
 	"""Handle the bets open phase."""
 	context.bets_df = None
 	context.invalid_match = False
@@ -31,26 +78,26 @@ def handle_bets_open(context: MatchContext):
 	set_gate_state("open", context.config)
 	context.block_ids[0] = get_current_block_id()
 	logging.info("Current block ID at bets open: %d", context.block_ids[0])
-	result = subprocess.run(['node', '/javascript/buttonSimulation.js', '/run/secrets/keypair'], capture_output=True, text=True)
+	result = subprocess.run(['node', '/javascript/buttonSimulation.js', '/app/keypair.json'], capture_output=True, text=True)
 	logging.info("Simulation result: %s", result.stdout)
 
-def handle_bets_locked(context: MatchContext):
-    """Handle the bets locked phase."""
-    set_gate_state("close", context.config)
-    context.block_ids[1] = get_current_block_id()
-    logging.info("Fetching bets between blocks %d and %d", context.block_ids[0], context.block_ids[1])
-    context.bets_df = load_bets(context.block_ids[0], context.block_ids[1])
-    
-    if context.bets_df is None or context.bets_df.empty:
-        logging.info("No bets to process.")
-        context.bets_df = None
-        return
+async def handle_bets_locked(context: MatchContext):
+	"""Handle the bets locked phase."""
+	set_gate_state("close", context.config)
+	context.block_ids[1] = get_current_block_id()
+	logging.info("Fetching bets between blocks %d and %d", context.block_ids[0], context.block_ids[1])
+	context.bets_df = load_bets(context.block_ids[0], context.block_ids[1])
+	
+	if context.bets_df is None or context.bets_df.empty:
+		logging.info("No bets to process.")
+		context.bets_df = None
+		return
 
-    context.bets_df, context.invalid_match = compute_bets(context.bets_df)
-    if context.invalid_match:
-        context = handle_invalid_match(context)
+	context.bets_df, context.invalid_match = compute_bets(context.bets_df)
+	if context.invalid_match:
+		await handle_invalid_match(context)
 
-def handle_match_over(phase_text: str, context: MatchContext):
+async def handle_match_over(phase_text: str, context: MatchContext):
 	"""Handle the match over phase."""
 	winning_team = determine_winning_team(phase_text)
 	logging.info("handle match: %s", context.bets_df)
@@ -59,7 +106,7 @@ def handle_match_over(phase_text: str, context: MatchContext):
 
 	if is_invalid_match(context.bets_df, phase_text, context.current_phase):
 		context.invalid_match = True
-		return handle_invalid_match(context)
+		return await handle_invalid_match(context)
 
 	context.bets_df = compute_payouts(context.bets_df, winning_team, context.invalid_match)
 	process_payouts(context.bets_df, context.config)
@@ -67,7 +114,7 @@ def handle_match_over(phase_text: str, context: MatchContext):
 	save_last_match(context.bets_df, context.invalid_match)
 	context.bets_df = None
 
-def handle_invalid_match(context: MatchContext):
+async def handle_invalid_match(context: MatchContext):
 	"""Handle the invalid match phase."""
 	logging.info("Handling invalid match, refunding bets.")
 	if context.bets_df is None:
@@ -80,55 +127,19 @@ def handle_invalid_match(context: MatchContext):
 	save_last_match(context.bets_df, context.invalid_match)
 	context.bets_df = None
 
-def handle_phase(phase_text: str, context: MatchContext) -> MatchContext:
-	"""Handle the current phase of the match."""
-	phase_handlers = {
-		"Bets are OPEN!": handle_bets_open,
-		"Bets are locked": handle_bets_locked,
-		"wins!": lambda ctx: handle_match_over(phase_text, ctx),
-	}
-
-	if context.bets_df is not None and is_invalid_match(context.bets_df, phase_text, context.current_phase):
-		context.invalid_match = True
-		return handle_invalid_match(context)
-
-	for phase_keyword, handler in phase_handlers.items():
-		if phase_keyword in phase_text:
-			handler(context)
-			context.current_phase = phase_keyword
-	return context
-
-def main():
+async def main():
 	retry_delay = 20
 	while True:
 		try:
-			driver = FirefoxDriverManager.get_instance()
-			phase = {"text": None, "path": '/html/body/div/div[4]/div/span[2]'}
 			context = MatchContext()
-			while phase["text"] is None or "Bets are OPEN!" not in phase["text"]:
-				phase["text"] = wait_next_phase(driver, phase["path"], phase["text"])
-			while True:
-				try:
-					if context is None:
-						logging.error("Context is None. Reinitializing context.")
-						context = MatchContext()
-
-					if phase["text"] != context.current_phase:
-						context = handle_phase(phase["text"], context)
-						if context.bets_df is not None:
-							logging.info("Current bets_df state:\n%s", context.bets_df)
-					phase["text"] = wait_next_phase(driver, phase["path"], phase["text"])
-				except Exception as e:
-					send_to_discord(f"main: Unexpected error: {e}")
-					logging.error("Unexpected error: %s", e)
-					sleep(60)
+			await twitch_chat_listener(context)
 		except Exception as e:
 			send_to_discord(f"main: Critical error: {e}")
 			logging.error("Critical error: %s", e)
 			print(f"Retrying in {retry_delay} seconds...")
-			sleep(retry_delay)
+			await asyncio.sleep(retry_delay)
 
 if __name__ == "__main__":
 	print("Starting main")
 	logging.info("Starting main")
-	main()
+	asyncio.run(main())

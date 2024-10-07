@@ -1,6 +1,5 @@
 import requests
 import os
-from scrape import scrape_fighter
 from datetime import datetime
 from message import send_to_discord, send_info
 import time
@@ -29,13 +28,12 @@ def update_fighter_stats(winner, loser, headers):
   requests.put(f'http://backend:8000/api/fighters/update_fighter/',
                 json={"f_id": loser["f_id"], "win": False}, headers=headers).raise_for_status()
 
-def handle_bets_open(driver, headers):
-    red, blue = scrape_fighter(driver)
+def handle_bets_open(red_fighter, blue_fighter, headers):
     response_red, response_blue, match = None, None, None
     try:
-        response_red = requests.post('http://backend:8000/api/fighters/', json={"name": red["name"].replace(" ", "_")}, headers=headers)
+        response_red = requests.post('http://backend:8000/api/fighters/', json={"name": red_fighter.replace(" ", "_")}, headers=headers)
         response_red.raise_for_status()
-        response_blue = requests.post('http://backend:8000/api/fighters/', json={"name": blue["name"].replace(" ", "_")}, headers=headers)
+        response_blue = requests.post('http://backend:8000/api/fighters/', json={"name": blue_fighter.replace(" ", "_")}, headers=headers)
         response_blue.raise_for_status()
         fighter_red = response_red.json()
         fighter_blue = response_blue.json()
@@ -46,19 +44,19 @@ def handle_bets_open(driver, headers):
         match = response_match.json()
         return fighter_red, fighter_blue, match
     except Exception as e:
-      message = []
-      message.append("db: bet phase: red: ")
-      if response_red:
-          message.append(f"{response_red.json()}")
-      else:
-          message.append(f"{red}")
-      if response_blue:
-          message.append(f" - blue: {response_blue.json()}")
-      else:
-          message.append(f" - blue: {blue}")
-      message.append(f" {e}")
-      send_to_discord(f" {json.dumps(message, indent=4)} {e}")
-      return None, None, None
+        message = []
+        message.append("db: bet phase: red: ")
+        if response_red:
+            message.append(f"{response_red.json()}")
+        else:
+            message.append(f"{red_fighter}")
+        if response_blue:
+            message.append(f" - blue: {response_blue.json()}")
+        else:
+            message.append(f" - blue: {blue_fighter}")
+        message.append(f" {e}")
+        send_to_discord(f" {json.dumps(message, indent=4)} {e}")
+        return None, None, None
     
 def handle_bets_locked(headers, match):
     try:

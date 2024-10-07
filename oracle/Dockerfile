@@ -11,7 +11,6 @@ RUN apk add --no-cache \
     openssl-dev \
     libffi-dev \
     python3-dev \
-    firefox \
     curl \
     nodejs \
     npm \
@@ -31,10 +30,6 @@ RUN pip install --no-cache-dir --upgrade pip \
     && apk del gcc libffi-dev openssl-dev build-base python3-dev
 
 COPY . /app/
-
-RUN tar -xzf "geckodriver-v0.35.0-linux64.tar.gz" -C /usr/local/bin \
-    && rm "geckodriver-v0.35.0-linux64.tar.gz" \
-    && chmod +x /usr/local/bin/geckodriver
 
 # Set the DJANGO_SETTINGS_MODULE environment variable
 ENV DJANGO_SETTINGS_MODULE=backend.settings

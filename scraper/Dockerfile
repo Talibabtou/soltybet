@@ -10,8 +10,6 @@ RUN apk update && apk add --no-cache \
     musl-dev \
     libffi-dev \
     openssl-dev \
-    firefox \
-    wget \
     tar
 
 COPY requirements.in /app/
@@ -24,13 +22,6 @@ RUN pip install --no-cache-dir --upgrade pip \
     && apk del gcc musl-dev libffi-dev openssl-dev
 
 COPY . /app/
-
-# Install geckodriver
-# RUN GECKODRIVER_VERSION=$(wget -qO- "https://api.github.com/repos/mozilla/geckodriver/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")') \
-#     && wget "https://github.com/mozilla/geckodriver/releases/download/${GECKODRIVER_VERSION}/geckodriver-${GECKODRIVER_VERSION}-linux64.tar.gz" \
-RUN tar -xzf "geckodriver-v0.35.0-linux64.tar.gz" -C /usr/local/bin \
-    && rm "geckodriver-v0.35.0-linux64.tar.gz" \
-    && chmod +x /usr/local/bin/geckodriver
 
 ENV DJANGO_SETTINGS_MODULE=backend.settings
 

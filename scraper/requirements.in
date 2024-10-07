@@ -1,6 +1,4 @@
 Django
-selenium
-webdriver_manager
 channels
 asgiref
 redis

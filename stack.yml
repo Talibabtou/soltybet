@@ -63,6 +63,7 @@ services:
     image: localhost:5742/backend:0.0.1
     volumes:
       - backend_static:/app/staticfiles
+      - ./logs:/app/logs
     env_file:
       - .env
     secrets:
@@ -70,6 +71,7 @@ services:
       - django_pass
       - front_pass
       - scraper_pass
+      - stats_pass
       - certificate
       - key
       - ca_certificate
@@ -97,13 +99,17 @@ services:
         max_attempts: 3
         window: 120s
     hostname: backend
+    environment:
+      - LOGS_DIR=/app/logs
 
   scraper: #good
     image: localhost:5742/scraper:0.0.1
-    command: sh -c "python main.py"
+    command: sh -c "/app/scrap.sh"
     secrets:
       - scraper_pass
+      - stats_pass
       - discord
+      - channel
     volumes:
       - ./oracle/history:/app/history
     networks:
@@ -267,6 +273,10 @@ secrets:
   keypair:
     external: true
   discord:
+    external: true
+  channel:
+    external: true
+  stats_pass:
     external: true
     
 networks:

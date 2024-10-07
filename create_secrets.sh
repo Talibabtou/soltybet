@@ -5,7 +5,7 @@ generate_password() {
 }
 
 # Array of secret names
-secrets=("db_pass" "pgadmin_pass" "graf_pass" "django_pass" "front_pass" "scraper_pass")
+secrets=("db_pass" "pgadmin_pass" "graf_pass" "django_pass" "front_pass" "scraper_pass" "stats_pass")
 
 # Create secrets
 for secret in "${secrets[@]}"; do

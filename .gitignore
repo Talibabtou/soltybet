@@ -1,5 +1,6 @@
 rpc.json
 discord.json
+channel.json
 .env
 *.tar.gz
 config.json
@@ -9,3 +10,4 @@ match_history.csv
 *.pem
 *.key
 logs
+setup_logs

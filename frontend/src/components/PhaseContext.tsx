@@ -81,7 +81,7 @@ export const PhaseProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     setPhase('bet');
                     setWinningTeam(null);
                     
-                } else if (dataFromServer.message.includes("Bets are locked until the next match")) {
+                } else if (dataFromServer.message.includes("Bets are locked")) {
                     setPhase('wait');
                 } else if (dataFromServer.message.includes("wins! Payouts to Team Blue")) {
                     setPhase('reward');

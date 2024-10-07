@@ -50,7 +50,9 @@ async def send_info(info, m_id, headers):
         send_to_discord(f"message: Websocket: {e}")
         
 def send_to_discord(payload):
-    webhook_url = r'https://discord.com/api/webhooks/1292049759518855208/fRFEoeINscFFgPoe_3LfvbEXnIe_h8SiWBoXA5nCABrI9iOF9GGyw15xpJAUzigJMnC7'
+    with open('/run/secrets/discord', 'r') as secret_file:
+        discord_config = json.load(secret_file)
+        webhook_url = discord_config['error']['hook']
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.ERROR)
     stream_handler = logging.StreamHandler()
@@ -62,6 +64,8 @@ def send_to_discord(payload):
     logger.addHandler(stream_handler)
     logger.debug(payload)
     message = {
-        "content discord": f"```{formatter.format(logging.LogRecord(name=__name__, level=logging.ERROR, pathname=__file__, lineno=0, msg=payload, args=(), exc_info=None))}```"
+        "content": f"```{formatter.format(logging.LogRecord(name=__name__, level=logging.ERROR, pathname=__file__, lineno=0, msg=payload, args=(), exc_info=None))}```"
     }
-    print(f"Sending message: {json.dumps(message)}")
+    response = requests.post(webhook_url, json=message)
+    if response.status_code != 204:
+        raise Exception(f"message: Failed to send message to Discord webhook: {response.status_code}, {response.text}")

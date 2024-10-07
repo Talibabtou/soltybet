@@ -98,7 +98,7 @@ def handle_payout(headers, match, info):
     timeout = 30
     while True:
         if time.time() - start_time > timeout:
-            send_to_discord("db: Payout request timed out after 30 seconds")
+            printf("db: Payout request timed out after 30 seconds")
             return
         try:
             with open(file_path, 'r') as file:

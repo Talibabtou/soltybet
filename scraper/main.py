@@ -12,9 +12,13 @@ NICK = 'justinfan12345'  # Use a justinfan nickname for anonymous connection
 TARGET_ROOM_ID = '43201452'
 TARGET_USER_ID = '55853880'
 CHANNEL_NAME = 'saltybet'
+user = 'scrap'
+
 
 async def twitch_chat_listener():
-    token_data, token_expiry, headers = initialize_token()
+    user = 'scrap'
+    secret_file = 'scrap_pass'
+    token_data, token_expiry, headers = initialize_token(user, secret_file)
     current_time = None
     fighter_red, fighter_blue, match, total_blue, total_red = None, None, None, None, None
     phase = {"text": None}
@@ -44,7 +48,7 @@ async def twitch_chat_listener():
                         msg = msg.group(1)
                         if user_id == TARGET_USER_ID and room_id == TARGET_ROOM_ID:
                             print(f"Target message: {username}: {msg}")
-                            token_data, token_expiry, headers = check_and_refresh_token(token_data, token_expiry, headers)
+                            token_data, token_expiry, headers = check_and_refresh_token(token_data, token_expiry, headers, user, secret_file)
                             if "Bets are OPEN" in msg:
                                 sync_time = True
                                 phase["text"] = "Bets are OPEN!"

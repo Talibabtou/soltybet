@@ -10,6 +10,7 @@ RUN apk update && apk add --no-cache \
     musl-dev \
     libffi-dev \
     openssl-dev \
+		--no-cache curl \
     tar
 
 COPY requirements.in /app/
@@ -25,4 +26,5 @@ COPY . /app/
 
 ENV DJANGO_SETTINGS_MODULE=backend.settings
 
-CMD ["python", "-u", "main.py"]
+RUN chmod +x /app/scrap.sh
+CMD ["/bin/sh", "-c", "/app/scrap.sh"]

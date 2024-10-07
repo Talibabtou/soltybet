@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useRef, useEffect, useCallback } from 'react';
-import { connectWebSocket, closeWebSocket, sendMessage } from '../websocket';
+import { connectWebSocket, closeWebSocket } from '../websocket';
 
 interface WebSocketContextType {
   onMessage: (callback: (data: any) => void) => void;

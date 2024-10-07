@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection, PublicKey, Transaction, SystemProgram, clusterApiUrl } from '@solana/web3.js';
-import { tokenManager, User } from '../../api';
-import { UserContext } from '../../App';  // Add this import
+import { tokenManager } from '../../api';
+import { UserContext } from '../../App';
 import './Referral.css';
 
 const Referral: React.FC = () => {
@@ -37,7 +37,7 @@ const Referral: React.FC = () => {
         setShowTick(true);
         setTimeout(() => setShowTick(false), 2000);
       }, (err) => {
-        console.error("Error copying to clipboard: ", err);
+        console.error("Error copying to clipboard.");
       });
     } else {
       console.error("Cannot copy empty text to clipboard");
@@ -115,7 +115,7 @@ const Referral: React.FC = () => {
         setHasReferral(true);
         setReferralSubmitted(true);
         setTransactionStatus('success');
-				await refreshUser();
+        await refreshUser();
       } else {
         throw new Error("Unexpected response from server");
       }
@@ -123,7 +123,7 @@ const Referral: React.FC = () => {
       setTimeout(() => setTransactionStatus('idle'), 5000);
 
     } catch (error: unknown) {
-      console.error("Transaction or referral submission failed:", error);
+      console.error("Transaction or referral submission failed.");
       if (error instanceof Error) {
         setErrorMessage(error.message);
       } else if (typeof error === 'object' && error !== null && 'response' in error) {

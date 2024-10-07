@@ -1,20 +1,18 @@
-import React, { useContext, useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import '@solana/wallet-adapter-react-ui/styles.css';
 import './Navbar.css';
 import { Connection, clusterApiUrl, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { PhaseContext } from '../../components/PhaseContext';
 
 const Navbar = () => {
- const { setPhase, phase } = useContext(PhaseContext);
  const { publicKey, connected } = useWallet();
  const [balance, setBalance] = useState(0);
  const [isMenuOpen, setIsMenuOpen] = useState(false);
  const [newsTexts] = useState([
-   "Solty Bet Launch in v1.0, Feel free to share your feedback on discord",
-   "Join our Discord community !",
-   "Follow us on Twitter for the latest news and announcements."
+   "Solty Bet Launch in v0.9, Feel free to share your feedback on discord",
+   "Join our Discord community!",
+   "Follow us on Twitter @SoltyBetfor the latest news and announcements."
  ]);
  const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
 
@@ -34,7 +32,7 @@ const Navbar = () => {
       const balance = await connection.getBalance(publicKey);
       setBalance(balance);
     } catch (error) {
-      console.error('Error fetching initial balance:', error);
+      console.error('Error fetching initial balance.');
     }
   }
  }, [publicKey]);
@@ -51,14 +49,12 @@ const Navbar = () => {
         subscriptionId.current = await connection.current!.onAccountChange(
           publicKey,
           (updatedAccountInfo) => {
-            
             setBalance(updatedAccountInfo.lamports);
           },
           'confirmed'
         );
-        
       } catch (error) {
-        console.error('Error setting up WebSocket:', error);
+        console.error('Error setting up WebSocket.');
       }
     };
 
@@ -68,7 +64,7 @@ const Navbar = () => {
     return () => {
       if (subscriptionId.current !== null && connection.current) {
         connection.current.removeAccountChangeListener(subscriptionId.current)
-          .catch((error) => console.error('Error unsubscribing from WebSocket:', error));
+          .catch(() => console.error('Error unsubscribing from WebSocket.'));
       }
     };
   }

@@ -11,69 +11,69 @@ type WebSocketMessage = {
 };
 
 interface PhaseContextType {
-	phase: string | null;
-	setPhase: React.Dispatch<React.SetStateAction<string | null>>;
-	redFighter: string | null;
-	blueFighter: string | null;
-	setRedFighter: React.Dispatch<React.SetStateAction<string | null>>;
-	setBlueFighter: React.Dispatch<React.SetStateAction<string | null>>;
-	winningTeam: string | null;
-	setWinningTeam: React.Dispatch<React.SetStateAction<string | null>>;
-	shouldFetchData: boolean;
-	setShouldFetchData: React.Dispatch<React.SetStateAction<boolean>>;
-	payoutId: string | null;
-	setPayoutId: React.Dispatch<React.SetStateAction<string | null>>;
-	matchId: string | null;
-	setMatchId: React.Dispatch<React.SetStateAction<string | null>>;
-	shouldFetchRefund: boolean;
-	setShouldFetchRefund: React.Dispatch<React.SetStateAction<boolean>>;
+  phase: string | null;
+  setPhase: React.Dispatch<React.SetStateAction<string | null>>;
+  redFighter: string | null;
+  blueFighter: string | null;
+  setRedFighter: React.Dispatch<React.SetStateAction<string | null>>;
+  setBlueFighter: React.Dispatch<React.SetStateAction<string | null>>;
+  winningTeam: string | null;
+  setWinningTeam: React.Dispatch<React.SetStateAction<string | null>>;
+  shouldFetchData: boolean;
+  setShouldFetchData: React.Dispatch<React.SetStateAction<boolean>>;
+  payoutId: string | null;
+  setPayoutId: React.Dispatch<React.SetStateAction<string | null>>;
+  matchId: string | null;
+  setMatchId: React.Dispatch<React.SetStateAction<string | null>>;
+  shouldFetchRefund: boolean;
+  setShouldFetchRefund: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const initialPhaseContext: PhaseContextType = {
-	phase: null,
-	setPhase: () => {},
-	redFighter: null,
-	blueFighter: null,
-	setRedFighter: () => {},
-	setBlueFighter: () => {},
-	winningTeam: null,
-	setWinningTeam: () => {},
-	shouldFetchData: false,
-	setShouldFetchData: () => {},
-	payoutId: null,
-	setPayoutId: () => {},
-	matchId: null,
-	setMatchId: () => {},
-	shouldFetchRefund: false,
-	setShouldFetchRefund: () => {},
+  phase: null,
+  setPhase: () => {},
+  redFighter: null,
+  blueFighter: null,
+  setRedFighter: () => {},
+  setBlueFighter: () => {},
+  winningTeam: null,
+  setWinningTeam: () => {},
+  shouldFetchData: false,
+  setShouldFetchData: () => {},
+  payoutId: null,
+  setPayoutId: () => {},
+  matchId: null,
+  setMatchId: () => {},
+  shouldFetchRefund: false,
+  setShouldFetchRefund: () => {},
 };
 
 export const PhaseContext = createContext<PhaseContextType>(initialPhaseContext);
 
 export const PhaseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-	const [phase, setPhase] = useState<string | null>(null);
-	const [redFighter, setRedFighter] = useState<string | null>(null);
-	const [blueFighter, setBlueFighter] = useState<string | null>(null);
-	const [winningTeam, setWinningTeam] = useState<string | null>(null);
-	const [shouldFetchData, setShouldFetchData] = useState<boolean>(false);
-	const [payoutId, setPayoutId] = useState<string | null>(null);
-	const [matchId, setMatchId] = useState<string | null>(null);
-	const { onMessage } = useWebSocket();
-	const [shouldFetchRefund, setShouldFetchRefund] = useState<boolean>(false);
+  const [phase, setPhase] = useState<string | null>(null);
+  const [redFighter, setRedFighter] = useState<string | null>(null);
+  const [blueFighter, setBlueFighter] = useState<string | null>(null);
+  const [winningTeam, setWinningTeam] = useState<string | null>(null);
+  const [shouldFetchData, setShouldFetchData] = useState<boolean>(false);
+  const [payoutId, setPayoutId] = useState<string | null>(null);
+  const [matchId, setMatchId] = useState<string | null>(null);
+  const { onMessage } = useWebSocket();
+  const [shouldFetchRefund, setShouldFetchRefund] = useState<boolean>(false);
 
-	useEffect(() => {
-		const handleMessage = (dataFromServer: WebSocketMessage) => {
-			if (dataFromServer.type === "info") {
-				if (dataFromServer.text === "Payout") {
-					console.log("Setting shouldFetchData to true");
-					setShouldFetchData(true);
-					setPayoutId(dataFromServer.m_id || null);
-				} else if (dataFromServer.text === "Refund") {
-					console.log("Setting shouldFetchRefund to true");
-					setShouldFetchRefund(true);
-					setPayoutId(dataFromServer.m_id || null);
-				}
-			} else if (dataFromServer.message) {
+  useEffect(() => {
+    const handleMessage = (dataFromServer: WebSocketMessage) => {
+      if (dataFromServer.type === "info") {
+        if (dataFromServer.text === "Payout") {
+          console.log("Setting shouldFetchData to true");
+          setShouldFetchData(true);
+          setPayoutId(dataFromServer.m_id || null);
+        } else if (dataFromServer.text === "Refund") {
+          console.log("Setting shouldFetchRefund to true");
+          setShouldFetchRefund(true);
+          setPayoutId(dataFromServer.m_id || null);
+        }
+      } else if (dataFromServer.message) {
                 setRedFighter(dataFromServer.redFighter || null);
                 setBlueFighter(dataFromServer.blueFighter || null);
                 
@@ -123,9 +123,9 @@ export const PhaseProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 };
 
 export const usePhase = () => {
-    const context = useContext(PhaseContext);
-    if (context === undefined) {
-        throw new Error('usePhase must be used within a PhaseProvider');
-    }
-    return context;
+  const context = useContext(PhaseContext);
+  if (context === undefined) {
+    throw new Error('usePhase must be used within a PhaseProvider');
+  }
+  return context;
 };

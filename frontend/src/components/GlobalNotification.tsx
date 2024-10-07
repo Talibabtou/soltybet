@@ -92,7 +92,7 @@ const GlobalNotification: React.FC = () => {
           addNotification(`${payout.toFixed(2)} SOL`, '#3BD825', 'payout', txOut);
         }
       } catch (error) {
-        console.error('Error fetching payout data:', error);
+        console.error('Error fetching payout data.');
         addNotification('Error fetching payout data', '#D82525');
       }
       setShouldFetchData(false);
@@ -131,7 +131,7 @@ const GlobalNotification: React.FC = () => {
           console.log('No refund to display (refund <= 0)');
         }
       } catch (error) {
-        console.error('Error fetching refund data:', error);
+        console.error('Error fetching refund data.');
         addNotification('Error fetching refund data', '#D82525');
       } finally {
         console.log('Setting shouldFetchRefund to false');

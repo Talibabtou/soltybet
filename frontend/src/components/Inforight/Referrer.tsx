@@ -57,9 +57,9 @@ const Referrer: React.FC<ReferrerProps> = ({ user }: ReferrerProps) => {
       setTimeout(() => setReferrerMessage('idle'), 5000);
 
     } catch (error: unknown) {
-      console.error("Referrer submission failed:", error);
+      console.error("Referrer submission failed.");
       if (axios.isAxiosError(error) && error.response) {
-        console.error("Error response:", error.response.data);
+        console.error("Error response.");
         if (error.response.data.error === 'No User matches the given query.') {
           setErrorMessage('This referrer does not exist');
         } else {

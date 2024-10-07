@@ -1,31 +1,31 @@
 .buttons-container {
-    height: 100%;
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: -2%;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: -2%;
 }
 
 .redbox {
-    width: 50%;
-    height: 12vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    box-sizing: border-box;
+  width: 50%;
+  height: 12vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 .bluebox {
-    width: 50%;
-    height: 12vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    box-sizing: border-box;
+  width: 50%;
+  height: 12vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 .dynred {
@@ -36,10 +36,10 @@
 }
 
 .dynblue {
-    color: #4747dd;
-    font-size: 135%;
-    text-shadow: 0 0 2px #1d1dbd;
-    font-weight: bold;
+  color: #4747dd;
+  font-size: 135%;
+  text-shadow: 0 0 2px #1d1dbd;
+  font-weight: bold;
 }
 
 @keyframes clickPulse {
@@ -212,7 +212,7 @@
     text-shadow: 0 0 2px #f54b4b;
     font-weight: bold;
   }
-.dynblue {
+  .dynblue {
     color: #4747dd;
     font-size: 80%;
     text-shadow: 0 0 2px #1d1dbd;

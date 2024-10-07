@@ -9,7 +9,7 @@ export function generateTransactions(batchSize, dropList, fromWallet) {
 	let result = [];
 
 	let txInstructions = dropList.map(drop => {
-		const numLamports = BigInt(drop.numSOL);
+		const numLamports = drop.numSOL;
 		try {
 			const toPubkey = new PublicKey(drop.walletAddress);
 			return SystemProgram.transfer({

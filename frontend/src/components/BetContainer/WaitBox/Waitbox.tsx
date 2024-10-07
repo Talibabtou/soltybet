@@ -41,7 +41,7 @@ const Waitbox: React.FC = () => {
             
             setExpectedWinsData(data);
         } catch (error) {
-            console.error('Error while fetching expected wins data:', error);
+            console.error('Error while fetching expected wins data.');
             setExpectedWinsData(null);
         }
     }, [phase, latestMatch, user]);

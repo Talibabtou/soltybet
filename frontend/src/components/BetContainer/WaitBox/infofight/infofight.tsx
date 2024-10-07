@@ -1,4 +1,3 @@
-// Infofight.js
 import React from 'react';
 import './infofight.css';
 

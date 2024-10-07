@@ -4,7 +4,6 @@ export interface ExpectedWinsData {
   userRedVolume: number;
   userBlueVolume: number;
 }
-
 export interface User {
   u_id: string;
   wallet: string;
@@ -18,7 +17,6 @@ export interface User {
   last_login: string;
   creation_date: string;
 }
-
 export interface Bet {
   b_id: string;
   u_id: string;
@@ -105,7 +103,7 @@ const createTokenManager = () => {
         throw new Error('Token refresh failed');
       }
     } catch (error) {
-      console.error('Error refreshing token:', error);
+      console.error('Error refreshing token.');
       isAuthenticated = false;
       encryptedJwtToken = null;
       encryptedJwtRefreshToken = null;
@@ -130,7 +128,7 @@ const createTokenManager = () => {
         }
         throw new Error('Authentication failed');
       } catch (error) {
-        console.error('Error getting token:', error);
+        console.error('Error getting token.');
         throw error;
       }
     },

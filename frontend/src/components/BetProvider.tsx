@@ -10,26 +10,26 @@ interface BetData {
 export const BetContext = createContext<{ betData: BetData; setBetData: React.Dispatch<React.SetStateAction<BetData>> } | undefined>(undefined);
 
 export const BetProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
- const [betData, setBetData] = useState<BetData>({
+  const [betData, setBetData] = useState<BetData>({
     wallet: '',
     amount: '',
     color: '',
     inputValue: '',
- });
+  });
 
- const value = useMemo(() => ({ betData, setBetData }), [betData, setBetData]);
+  const value = useMemo(() => ({ betData, setBetData }), [betData, setBetData]);
 
- return (
+  return (
     <BetContext.Provider value={value}>
-      {children}
+    {children}
     </BetContext.Provider>
- );
+  );
 };
 
 export const useBet = () => {
- const context = useContext(BetContext);
- if (context === undefined) {
+  const context = useContext(BetContext);
+  if (context === undefined) {
     throw new Error('useBet must be used within a BetProvider');
- }
- return context;
+  }
+  return context;
 };

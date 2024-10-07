@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import Reactfrom 'react';
 import BetInput from './BetInput/BetInput';
 import BetButtons from './BetButtons/BetButtons';
 import InfoBet from './Infobet/Infobet';

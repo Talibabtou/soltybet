@@ -104,7 +104,7 @@ const Odd: React.FC<OddProps> = ({ matchData, phase, showOdds }) => {
   }, []);
 
   if (phase !== 'wait' || !matchData) {
-    console.error('Odd - Returning empty container');
+    console.error('Returning empty container.');
     return <div className="odd"></div>;
   }
 

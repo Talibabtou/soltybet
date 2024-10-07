@@ -25,7 +25,7 @@ const Sidebar: React.FC = () => {
   const [data, setData] = useState<{ volume: DataItem[]; gain: DataItem[] }>({ volume: [], gain: [] });
   const [userStats, setUserStats] = useState<UserStats>({ volume: 0, gain: 0, nbBets: 0 });
   const { user } = useContext(UserContext);
-  const { payoutId, shouldFetchData, setShouldFetchData, shouldFetchRefund, setShouldFetchRefund } = useContext(PhaseContext);
+  const { shouldFetchData, setShouldFetchData, shouldFetchRefund, setShouldFetchRefund } = useContext(PhaseContext);
 
 
   const fetchTopData = useCallback(async () => {
@@ -36,7 +36,7 @@ const Sidebar: React.FC = () => {
       ]);
       setData({ volume: volumeData, gain: gainData });
     } catch (error) {
-      console.error("Error while fetching top data:", error);
+      console.error("Error while fetching top data.");
     }
   }, []);
 
@@ -46,7 +46,7 @@ const Sidebar: React.FC = () => {
         const stats = await tokenManager.getData<UserStats>(`/users/${user.u_id}/stats/`);
         setUserStats(stats);
       } catch (error) {
-        console.error("Error while fetching user stats:", error);
+        console.error("Error while fetching user stats.");
       }
     }
   }, [user]);

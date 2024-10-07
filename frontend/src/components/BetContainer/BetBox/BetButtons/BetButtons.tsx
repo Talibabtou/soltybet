@@ -37,7 +37,7 @@ const BetButtons = () => {
     setPendingBetId 
   } = useTransaction();
   const { publicKey, signTransaction, connected } = useWallet();
-  const { redFighter, blueFighter, phase } = useContext(PhaseContext);
+  const { redFighter, blueFighter } = useContext(PhaseContext);
   const { betData } = useBet();
   const { user, refreshUser } = useContext(UserContext);
   const { latestMatch } = useMatch();
@@ -55,7 +55,7 @@ const BetButtons = () => {
       
       return response;
     } catch (error) {
-      console.error('Error processing bet:', error);
+      console.error('Error processing bet.');
       throw error;
     }
   };
@@ -66,7 +66,7 @@ const BetButtons = () => {
       
       return response;
     } catch (error) {
-      console.error('Error confirming bet:', error);
+      console.error('Error confirming bet.');
       throw error;
     }
   };
@@ -77,7 +77,7 @@ const BetButtons = () => {
       
       return response;
     } catch (error) {
-      console.error('Error canceling bet:', error);
+      console.error('Error canceling bet.');
       throw error;
     }
   };
@@ -105,7 +105,7 @@ const BetButtons = () => {
           const referrerData = await tokenManager.getData<{ wallet: string }>(`/users/get_referrer_wallet/?ref_id=${user.ref_id}`);
           referrerWallet = referrerData.wallet;
         } catch (error) {
-          console.error("error can't get referrer wallet", error);
+          console.error("Error trying to get referrer wallet.");
         }
       }
       betResponse = await placeBetOnBackend({
@@ -177,7 +177,7 @@ const BetButtons = () => {
       setPendingBetId(null);
       setUserHasBet(true);
     } catch (error) {
-      console.error("Transaction failed", error);
+      console.error("Transaction failed.");
       let errorMessage = "Unknown error occurred";
       if (error instanceof Error) {
         const errorString = error.toString();
@@ -192,14 +192,14 @@ const BetButtons = () => {
         }
       } else if (axios.isAxiosError(error)) {
         if (error.response) {
-          console.error("Error response:", error.response.data);
-          errorMessage = `Server error: ${error.response.data.message || 'Unknown server error'}`;
+          console.error("Server error occurred.");
+          errorMessage = "Server error: Please try again later.";
         } else if (error.request) {
-          console.error("Error request:", error.request);
+          console.error("No response from server.");
           errorMessage = "No response from server. Please check your internet connection.";
         } else {
-          console.error("Error message:", error.message);
-          errorMessage = `Network error: ${error.message}`;
+          console.error("Network error occurred.");
+          errorMessage = "Network error: Please try again.";
         }
       }
       console.error("Detailed error:", errorMessage);
@@ -209,7 +209,7 @@ const BetButtons = () => {
         try {
           await cancelBetOnBackend(betResponse.b_id);
         } catch (cancelError) {
-          console.error("Failed to cancel bet on backend:", cancelError);
+          console.error("Failed to cancel bet on backend.");
         }
       }
       setPendingBetId(null);

@@ -15,7 +15,7 @@ const getWsToken = async (): Promise<string> => {
     const data = await postData<WSTokenResponse>('/ws_token/', {});
     return data.token;
   } catch (error) {
-    console.error('Error getting new WebSocket token:', error);
+    console.error('Error getting new WebSocket token.');
     throw error;
   }
 };
@@ -41,7 +41,7 @@ const connectWebSocket = async (onMessage: (data: any) => void): Promise<WebSock
       onMessage(data);
     };
 
-    socket.onclose = (event) => {
+    socket.onclose = () => {
       if (retryCount < maxRetries) {
         retryCount++;
         setTimeout(() => {
@@ -52,13 +52,13 @@ const connectWebSocket = async (onMessage: (data: any) => void): Promise<WebSock
       }
     };
 
-    socket.onerror = (error) => {
-      console.error("WebSocket Error:", error);
+    socket.onerror = () => {
+      console.error("WebSocket Error.");
     };
 
     return socket;
   } catch (error) {
-    console.error("Error connecting to WebSocket:", error);
+    console.error("Error connecting to WebSocket.");
     if (retryCount < maxRetries) {
       retryCount++;
       setTimeout(() => {

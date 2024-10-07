@@ -4,7 +4,7 @@ import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { clusterApiUrl } from "@solana/web3.js";
-import { postData, getData, User, tokenManager } from './api';
+import { User, tokenManager } from './api';
 import Navbar from './components/Navbar/Navbar';
 import Content from './components/Content/Content';
 import Sidebar from './components/Sidebar/Sidebar';
@@ -40,7 +40,7 @@ const AppContent: React.FC = () => {
           let userData = await tokenManager.postData<User>('/users/', { wallet: wallet.publicKey.toString() });
           setUser(userData);
         } catch (error) {
-          console.error('Error getting or creating user:', error);
+          console.error('Error getting or creating user.');
           setUser(null);
         }
       } else {
@@ -57,7 +57,7 @@ const AppContent: React.FC = () => {
         const userData = await tokenManager.getData<User>('/users/get_user_by_wallet/', { wallet: wallet.publicKey.toString() });
         setUser(userData);
       } catch (error) {
-        console.error('Error refreshing user data:', error);
+        console.error('Error refreshing user data.');
         setUser(null);
       }
     } else {
@@ -117,7 +117,7 @@ const App: React.FC = () => {
       try {
         await tokenManager.getToken();
       } catch (error) {
-        console.error('Failed to initialize authentication:', error);
+        console.error('Failed to initialize authentication.');
       }
     };
 

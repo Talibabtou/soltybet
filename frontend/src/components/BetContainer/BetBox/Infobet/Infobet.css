@@ -1,18 +1,18 @@
 .infobet {
-    width: 100%;
-    align-items: center;
-    justify-content: center;
-    height: 100%; 
-    color: #fff;
-    border-bottom-left-radius: 10px;
-    border-bottom-right-radius: 10px;
-    font-size: 125%;
-    margin-top: 0.5%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  height: 100%; 
+  color: #fff;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  font-size: 125%;
+  margin-top: 0.5%;
 }
 
 
 @media screen and (max-width: 1024px) {
-    .infobet {
-        font-size: 90%;
-    }
+  .infobet {
+    font-size: 90%;
+  }
 }

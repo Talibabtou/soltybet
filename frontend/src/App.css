@@ -27,7 +27,6 @@ body, html, #root {
 .sidebar {
   text-align: center;
   flex: 0.6;
-  
   color: #fff;
   height: 64vh;
 }

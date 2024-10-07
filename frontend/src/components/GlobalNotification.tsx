@@ -102,25 +102,21 @@ const GlobalNotification: React.FC = () => {
 
   useEffect(() => {
     const fetchRefundData = async () => {
-      console.log('fetchRefundData called. Current state:', { 
-        shouldFetchRefund, 
-        user: user?.wallet, 
-        latestMatch: latestMatch?.m_id 
-      });
+     
 
       if (!shouldFetchRefund || !user || !latestMatch) {
-        console.log('Skipping refund fetch due to missing data');
+        
         return;
       }
 
       try {
-        console.log('Fetching refund data for:', { m_id: latestMatch.m_id, wallet: user.wallet });
+       
         const data = await tokenManager.getData<{ totalPayout: number, tx_out: string }>('/users/actual_wins_data/', {
           m_id: latestMatch.m_id,
           wallet: user.wallet
         });
         
-        console.log('Refund data received:', data);
+        
         const refund = data.totalPayout;
         const txOut = data.tx_out;
         

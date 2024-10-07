@@ -1,7 +1,7 @@
 import pandas as pd
 import subprocess
 import json
-import logging
+from config import logger
 
 def parse_payouts(bets_df, config):
 	"""Parse payouts from the bets DataFrame and prepare a JSON object for transactions."""
@@ -44,19 +44,19 @@ def process_payouts(bets_df, config):
 	"""Process payouts by calling the JavaScript function to send transactions."""
 
 	if bets_df.empty:
-		logging.info("No bets to process for payouts.")
+		logger.debug("No bets to process for payouts.")
 		return
 
 	json_data = parse_payouts(bets_df, config)
 	if not json_data:
-		logging.error("Error: JSON data is empty or malformed.")
+		logger.error("Error: JSON data is empty or malformed.")
 		return
 
 	result = subprocess.run(['node', 'javascript/bulkSend.js', json_data, config['oracle_wallet']], capture_output=True, text=True)
 	json_output = result.stdout.strip()
 
 	if not json_output:
-		logging.error("Error: No output from JavaScript execution.")
+		logger.error("Error: No output from JavaScript execution.")
 		return
 
 	update_with_valid_hash(bets_df, json_output)

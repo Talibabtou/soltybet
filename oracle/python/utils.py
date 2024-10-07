@@ -1,14 +1,14 @@
 import pandas as pd
 import subprocess
 import json
-import logging
+from config import logger
 import time
 import os
 
 def get_current_block_id():
 	result = subprocess.run(['node', 'javascript/getBlock.js'], capture_output=True, text=True)
 	if result.returncode != 0:
-		logging.error("Failed to get current block ID: %s", result.stderr)
+		logger.error("Failed to get current block ID: %s", result.stderr)
 		return None
 	return int(result.stdout.strip())
 
@@ -21,22 +21,22 @@ def load_bets(open_timestamp: int, close_timestamp: int) -> pd.DataFrame:
 			text=True
 		)
 		output = result.stdout.strip()
-		logging.info("fetch.js output: %s", output)
+		logger.debug("fetch.js output: %s", output)
 		if not output:
-			logging.error("No output from fetch.js")
+			logger.error("No output from fetch.js")
 			return None
 
 		bets = json.loads(output)
 
 		if isinstance(bets, dict) and 'error' in bets:
-			logging.error("Error from fetch.js: %s", bets['error'])
+			logger.error("Error from fetch.js: %s", bets['error'])
 			return None
 
 		bets_df = pd.DataFrame(bets, columns=['bet_id', 'user_address', 'initial_amount_bet', 'team', 'referrer_address'])
-		logging.info("Loaded bets data from blockchain.")
+		logger.debug("Loaded bets data from blockchain.")
 		return bets_df
 	except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
-		logging.error("Failed to fetch bets: %s", e)
+		logger.error("Failed to fetch bets: %s", e)
 		return None
 
 def both_teams_bet(bets_df: pd.DataFrame) -> bool:
@@ -57,7 +57,7 @@ def is_invalid_match(bets_df: pd.DataFrame, phase_text: str, current_phase: str)
 		return True
 
 	if not both_teams_bet(bets_df):
-		logging.warning("Invalid match detected: one or both teams have no bets.")
+		logger.warning("Invalid match detected: one or both teams have no bets.")
 		return True
 
 	valid_transitions = {
@@ -70,7 +70,7 @@ def is_invalid_match(bets_df: pd.DataFrame, phase_text: str, current_phase: str)
 	for phase_keyword in valid_transitions.values():
 		if phase_keyword in phase_text:
 			if valid_transitions.get(current_phase) != phase_keyword:
-				logging.warning("Invalid phase transition detected: %s -> %s", current_phase, phase_keyword)
+				logger.warning("Invalid phase transition detected: %s -> %s", current_phase, phase_keyword)
 				return True
 
 	return False
@@ -87,7 +87,7 @@ def determine_winning_team(phase_text: str) -> str:
 def save_match_history(match_df: pd.DataFrame, invalid_match: bool, file_path: str = '/app/history/match_history.csv'):
 	"""Save match history to a CSV file without empty lines between matches."""
 	if match_df.empty:
-		logging.info("No match history to save.")
+		logger.debug("No match history to save.")
 		return
 
 	if not match_df.empty and match_df.notna().any().any():
@@ -105,16 +105,16 @@ def save_match_history(match_df: pd.DataFrame, invalid_match: bool, file_path: s
 		match_df = match_df[['bet_id', 'user_address', 'amount_bet', 'initial_amount_bet', 'team', 
 							 'contribution_rate', 'payout', 'valid_hash', 'referrer_address', 'referrer_royalty', 'house_fee', 'invalid_match']]
 		
-		logging.info("Current bets_df state:\n%s", match_df)
+		logger.debug("Current bets_df state:\n%s", match_df)
 
 		mode = 'a' if file_exists else 'w'
 		match_df.to_csv(file_path, mode=mode, header=not file_exists, index=False)
-		logging.info("Match history saved to %s", file_path)
+		logger.debug("Match history saved to %s", file_path)
 
 def save_last_match(match_df: pd.DataFrame, invalid_match: bool, file_path: str = '/app/history/last_match.json'):
 	"""Save the last match results to a JSON file, including validity status."""
 	if match_df.empty:
-		logging.info("No last match data to save.")
+		logger.debug("No last match data to save.")
 		with open(file_path, 'w') as json_file:
 			json.dump([], json_file)
 		return
@@ -139,4 +139,4 @@ def save_last_match(match_df: pd.DataFrame, invalid_match: bool, file_path: str 
 
 		with open(file_path, 'w') as json_file:
 			json.dump(match_data, json_file)
-		logging.info("Last match results saved to %s", file_path)
+		logger.debug("Last match results saved to %s", file_path)

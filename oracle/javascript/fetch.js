@@ -13,7 +13,7 @@ const loadKeypair = (path) => {
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function fetchTransactionsWithinBlocks(startBlock, endBlock) {
-	const connection = new Connection('https://solana-devnet.g.alchemy.com/v2/eyQn3dcMt9JS3XVpMx4tzKCXExD0onOg', 'confirmed'); //secret
+	const connection = new Connection(config.rpc_url, 'confirmed'); //secret
 	const oracleKeypair = loadKeypair(config.oracle_wallet);
 	const oracleWallet = oracleKeypair.publicKey;
 

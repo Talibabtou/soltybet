@@ -1,4 +1,4 @@
-import logging
+from config import logger
 import pandas as pd
 from utils import both_teams_bet
 
@@ -18,7 +18,7 @@ def calculate_house_fee(row):
 
 def compute_bets(bets_df: pd.DataFrame):
 	"""Process bets to apply referrer royalties and calculate contribution rates."""
-	logging.info("compute_bets: %s", bets_df)
+	logger.info("compute_bets: %s", bets_df)
 	if bets_df.empty:
 		return bets_df, False
 
@@ -30,9 +30,9 @@ def compute_bets(bets_df: pd.DataFrame):
 
 	bets_df = bets_df.apply(apply_ref_royalties, axis=1)
 	team_totals = bets_df.groupby('team')['amount_bet'].sum()
-	logging.info("Team totals:\n%s", team_totals)
+	logger.debug("Team totals:\n%s", team_totals)
 	bets_df['contribution_rate'] = bets_df['amount_bet'] / bets_df['team'].map(team_totals)
-	logging.info("Bettor contribution rates calculated.")
+	logger.debug("Bettor contribution rates calculated.")
 
 	return bets_df, False
 
@@ -47,7 +47,7 @@ def compute_payouts(bets_df, winning_team, is_invalid):
 	bets_df['payout'] = bets_df.get('payout', 0.0)
 
 	if winning_team not in team_totals:
-		logging.error("Match is over without a winner, funds will be refunded to bettors")
+		logger.error("Match is over without a winner, funds will be refunded to bettors")
 		return bets_df
 
 	total_bets = team_totals.sum()
@@ -62,7 +62,7 @@ def compute_payouts(bets_df, winning_team, is_invalid):
 		bets_df['house_fee'] = 0.0
 
 	current_house_fee = bets_df['house_fee'].sum()
-	logging.info("Final payouts after subtracting house fees calculated.")
-	logging.info("Total house fee collected during the match: %s", current_house_fee)
+	logger.debug("Final payouts after subtracting house fees calculated.")
+	logger.info("Total house fee collected during the match: %s", current_house_fee)
 
 	return bets_df

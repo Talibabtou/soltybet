@@ -22,16 +22,15 @@ async def twitch_chat_listener():
     fighter_red, fighter_blue, match, total_blue, total_red = None, None, None, None, None
     phase = {"text": None}
     sync_time = False
-
     async with websockets.connect(TWITCH_WS_URL) as websocket:
         await websocket.send(f'NICK {NICK}')
         await websocket.send(f'CAP REQ :twitch.tv/tags twitch.tv/commands')
         await websocket.send(f'JOIN #{CHANNEL_NAME}')
-
         print(f"Joining channel: #{CHANNEL_NAME}")
-
         with ProcessPoolExecutor() as executor:
             while True:
+                token_data, token_expiry, headers = check_and_refresh_token(token_data, token_expiry, headers, user, secret_file)
+                print(f"Updated token expiry: {token_expiry}")
                 message = await websocket.recv()
                 if message.startswith('PING'):
                     await websocket.send('PONG :tmi.twitch.tv')
@@ -47,7 +46,6 @@ async def twitch_chat_listener():
                         msg = msg.group(1)
                         if user_id == TARGET_USER_ID and room_id == TARGET_ROOM_ID:
                             print(f"Target message: {username}: {msg}")
-                            token_data, token_expiry, headers = check_and_refresh_token(token_data, token_expiry, headers, user, secret_file)
                             if "Bets are OPEN" in msg:
                                 sync_time = True
                                 phase["text"] = "Bets are OPEN!"

@@ -33,22 +33,27 @@ secret_file = 'stats_pass'
 @client.event
 async def on_ready():
     print(f'Logged in as {client.user}')
+    global token_data, token_expiry, headers
     token_data, token_expiry, headers = initialize_token(user, secret_file)  # Initialize the token
     print(f'Bot is ready, starting the loop')
-    update_channel_names.start(token_data, token_expiry, headers, user, secret_file)  # Start the loop when the bot is ready
+    update_channel_names.start()  # Start the loop when the bot is ready
 
-@tasks.loop(seconds=180)  # Set the interval to 180 seconds (3 minutes)
-async def update_channel_names(token_data, token_expiry, headers, user, secret_file):
+@tasks.loop(seconds=60)  # Set the interval to 60 seconds (1 minute)
+async def update_channel_names():
     try:
+        global token_data, token_expiry, headers
         token_data, token_expiry, headers = check_and_refresh_token(token_data, token_expiry, headers, user, secret_file)
+
         match_stats = requests.get('http://backend:8000/api/matches/stats/', headers=headers).json()
         fighter_stats = requests.get('http://backend:8000/api/fighters/stats/', headers=headers).json()
         print(f'match_stats: {match_stats}')
         print(f'fighter_stats: {fighter_stats}')
+        
         channel = client.get_channel(MATCH_ID)
         await channel.edit(name=f'Matches - {match_stats["num_matches"]}')
         channel = client.get_channel(FIGHTER_ID)
         await channel.edit(name=f'Fighters - {fighter_stats["num_fighters"]}')
+        
         default_name = "No Fighter"
         default_elo = 1000.0
         top_fighter = fighter_stats.get("top_fighter", {})

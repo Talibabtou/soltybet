@@ -103,12 +103,16 @@ const createTokenManager = () => {
         throw new Error('Token refresh failed');
       }
     } catch (error) {
-      console.error('Error refreshing token.');
       isAuthenticated = false;
       encryptedJwtToken = null;
       encryptedJwtRefreshToken = null;
       cachedJwtToken = null;
-      throw error;
+      try {
+        await tokenManager.getToken();
+      } catch (newTokenError) {
+        console.error('Failed to get a new token after refresh failure.');
+        throw newTokenError;
+      }
     }
   };
 

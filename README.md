@@ -10,7 +10,10 @@ The different framework are:
 - Django for the backend and Redis for the websocket management
 - Vite-React for the Frontend
 - Python to scrap the game data from the IRC Twitch chat
+- PostgreSQL for the database
+- Grafana for the private / public statistics
 
 We doubled the scraping script to have an Oracle on a separate network to limit at maximum the attack surface for the oracle manageing the Smart Contract.
 
-We use the powerful feature of memo from Solana to share data from the Frontend to the Oracle and at the same time store them publicly on-chain so any user can verify the data.
+We use the powerful feature of memo from Solana to share data from the Frontend to the Oracle 
+Thus we store the bet publicly on-chain so any user can verify the data.

@@ -21,4 +21,4 @@ We use the powerful feature of memo from Solana to share data from the Frontend 
 Thus we store the bet publicly on-chain so any user can verify the data.
 
 ## Security
-For information about our current security status and CVEs, please check our [CVEs Report](./cves_report.md).
+For information about our current security status and CVEs, please check our [CVEs Report](./cves_report.txt).

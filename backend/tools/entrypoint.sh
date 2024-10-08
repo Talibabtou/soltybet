@@ -6,12 +6,6 @@
 #
 #######
 
-function generate_password ()
-{
-    # Equivalent to a return
-    echo `tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_\`{|}~' </dev/urandom | head -c $1`
-}
-# Read the Docker secret
 function read_secret() {
     local secret_name="$1"
     local secret_path="/run/secrets/${secret_name}"
@@ -47,10 +41,10 @@ FRONT_PASSWORD=$(read_secret "front_pass")
 SCRAPER_PASSWORD=$(read_secret "scraper_pass")
 STATS_PASSWORD=$(read_secret "stats_pass")
 
-# Delete the user to make sure we can create a new one
+
 python manage.py shell -c 'from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username="admin").delete()'
 python manage.py shell -c 'from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username="solty").delete()'
-# Create the superuser with the password from the secret
+
 echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('$DJANGO_SUPERUSER_USERNAME', '$DJANGO_SUPERUSER_EMAIL', '$DJANGO_SUPERUSER_PASSWORD')" | python manage.py shell
 
 if [ $? -ne 0 ]; then
@@ -72,8 +66,6 @@ python manage.py shell -c "from django.contrib.auth import get_user_model; User 
 python manage.py shell -c 'from django.contrib.auth import get_user_model; model = get_user_model(); model.objects.filter(username="stats").delete()'
 python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_user(username='stats', password='$STATS_PASSWORD')"
 
-# Checking the environment
-# To be safe run in prod by default
 STAGE="${STAGE:-prod}"
 PORT="${PORT:-8000}"
 

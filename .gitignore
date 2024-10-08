@@ -1,13 +1,27 @@
+# Configuration files
+pgadmin_servers.json
 rpc.json
 discord.json
 channel.json
-.env
-*.tar.gz
 config.json
+.env
+
+# Data files
 last_match_example.json
 match_history.csv
+
+# Logs
+logs
+setup_logs
+
+# Compressed files
+*.tar.gz
+
+# Certificates and keys
 *.crt
 *.pem
 *.key
-logs
-setup_logs
+
+# Database-related
+pgadmin_servers
+docker-compose.yml

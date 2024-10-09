@@ -14,6 +14,7 @@ The different framework are:
 - Python to scrap the game data from the IRC Twitch chat
 - PostgreSQL for the database
 - Grafana for the private / public statistics
+- Anchor for the deposit-gate smart contract
 
 We doubled the scraping script to have an Oracle on a separate network to limit at maximum the attack surface for the oracle manageing the Smart Contract.
 

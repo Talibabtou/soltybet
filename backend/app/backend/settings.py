@@ -241,7 +241,7 @@ LOGGING = {
             'propagate': False,
         },
         'datalog': {
-            'handlers': ['console', 'webhook_info', 'webhook_warning', 'webhook_error'],
+            'handlers': ['console', 'webhook_error'],
             'level': 'INFO',
             'propagate': False,
         },

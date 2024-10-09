@@ -20,7 +20,7 @@ def read_secret(secret_name):
 SECRET_KEY = read_secret('django_pass')
 DEBUG = False
 
-ALLOWED_HOSTS = ["scraper", "backend", "localhost", "frontend", "proxy", "solty.bet"]
+ALLOWED_HOSTS = ["scraper", "backend", "frontend", "proxy", "solty.bet"]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -28,29 +28,29 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-		'rest_framework',
-		'rest_framework_simplejwt.token_blacklist',
-		'channels',
-		'corsheaders',
-		'daphne',
+    'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
+    'channels',
+    'corsheaders',
+    'daphne',
     'django.contrib.staticfiles',
-		'phase',
-		'csp',
-		'datalog',
+    'phase',
+    'csp',
+    'datalog',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-		'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-		'datalog.jwt_middleware.JWTMiddleware',
+    'datalog.jwt_middleware.JWTMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-		'backend.middleware.ServiceExceptionMiddleware',
-		'csp.middleware.CSPMiddleware',
+    'backend.middleware.ServiceExceptionMiddleware',
+    'csp.middleware.CSPMiddleware',
 ]
 
 CSP_DEFAULT_SRC = ("'self'", "https://player.twitch.tv")
@@ -63,7 +63,7 @@ CSP_OBJECT_SRC = ("'none'",)
 CSP_BASE_URI = ("'self'",)
 CSP_FORM_ACTION = ("'self'",)
 CSP_FRAME_SRC = ("'self'", "https://player.twitch.tv")
-CSP_FRAME_ANCESTORS = ("'self'", "localhost:*", "https://solty.bet", "https://www.twitch.tv", "https://www.*.twitch.tv")
+CSP_FRAME_ANCESTORS = ("'self'", "https://solty.bet", "https://www.twitch.tv", "https://www.*.twitch.tv")
 CSP_REPORT_URI = "/csp-violation-report-endpoint/"
 
 SECURE_BROWSER_XSS_FILTER = True
@@ -161,7 +161,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOWED_ORIGINS = ['http://scraper', 'http://proxy', 'http://backend:8000', 'http://localhost:3000', 'http://frontend:3000', 'https://solty.bet', 'wss://solty.bet']
+CORS_ALLOWED_ORIGINS = ['http://scraper', 'http://proxy', 'http://backend:8000', 'http://frontend:3000', 'https://solty.bet', 'wss://solty.bet']
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -259,13 +259,13 @@ LOGGING = {
     'root': {
         'handlers': ['file', 'console', 'webhook_warning', 'webhook_error'],
         'level': 'WARNING',
-				'propagate': False,
+        'propagate': False,
     },
 }
 
 ASGI_APPLICATION = 'backend.asgi.application'
 
-CHANNELS_ALLOWED_ORIGINS = ['http://scraper', 'http://localhost:3000', 'https://solty.bet', 'wss://solty.bet']
+CHANNELS_ALLOWED_ORIGINS = ['http://scraper', 'https://solty.bet', 'wss://solty.bet']
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",

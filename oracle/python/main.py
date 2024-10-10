@@ -82,6 +82,10 @@ async def handle_phase(phase_text: str, context: MatchContext, sync_time: bool):
 
 async def handle_bets_open(context: MatchContext):
   """Handle the bets open phase."""
+  if context.bets_df is not None and not context.bets_df.empty:
+    logger.warning("Unresolved bets from previous match detected. Refunding...")
+    await handle_invalid_match(context)
+
   context.bets_df = None
   context.invalid_match = False
 

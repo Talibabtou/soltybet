@@ -98,7 +98,7 @@ const GlobalNotification: React.FC = () => {
       setShouldFetchData(false);
     };
     fetchPayoutData();
-  }, [shouldFetchData, user, payoutId, addNotification, setShouldFetchData]);
+  }, [shouldFetchData, user, setShouldFetchData]);
 
   useEffect(() => {
     const fetchRefundData = async () => {
@@ -139,7 +139,7 @@ const GlobalNotification: React.FC = () => {
       
       fetchRefundData();
     }
-  }, [shouldFetchRefund, user, latestMatch, addNotification, setShouldFetchRefund]);
+  }, [shouldFetchRefund, user, setShouldFetchRefund]);
 
   const shortenTxOut = (txOut: string) => {
     if (txOut.length > 20) {

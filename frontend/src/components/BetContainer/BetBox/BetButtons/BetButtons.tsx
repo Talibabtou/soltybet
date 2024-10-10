@@ -51,8 +51,8 @@ const BetButtons = () => {
 
   const placeBetOnBackend = async (betData: Partial<Bet>): Promise<Bet> => {
     try {
-      const response = await tokenManager.postData<Bet>('/bets/place_bet/', betData);
-      
+      const { u_id, m_id, team } = betData;
+      const response = await tokenManager.postData<Bet>('/bets/place_bet/', { u_id, m_id, team });
       return response;
     } catch (error) {
       console.error('Error processing bet.');
@@ -60,10 +60,9 @@ const BetButtons = () => {
     }
   };
 
-  const confirmBetOnBackend = async (b_id: string, tx_in: string) => {
+  const confirmBetOnBackend = async (b_id: string, tx_in: string, volume: number) => {
     try {
-      const response = await tokenManager.putData<Bet>('/bets/confirm_bet/', { b_id, tx_in });
-      
+      const response = await tokenManager.putData<Bet>('/bets/confirm_bet/', { b_id, tx_in, volume });
       return response;
     } catch (error) {
       console.error('Error confirming bet.');
@@ -173,7 +172,7 @@ const BetButtons = () => {
         throw new Error(`the transaction failed: ${JSON.stringify(confirmation.value.err)}`);
       }
       setTransactionStatus('success');
-      await confirmBetOnBackend(betResponse.b_id, signature);
+      await confirmBetOnBackend(betResponse.b_id, signature, betAmount);
       setPendingBetId(null);
       setUserHasBet(true);
     } catch (error) {

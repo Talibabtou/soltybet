@@ -372,7 +372,6 @@ class BetViewSet(BaseViewSet, mixins.UpdateModelMixin):
         u_id = request.data.get('u_id')
         m_id = request.data.get('m_id')
         team = request.data.get('team')
-        volume = request.data.get('volume')
         try:
             user = User.objects.get(u_id=u_id)
             match = Match.objects.get(m_id=m_id)
@@ -387,7 +386,6 @@ class BetViewSet(BaseViewSet, mixins.UpdateModelMixin):
                 m_id=match,
                 f_id=fighter,
                 team=team,
-                volume=Decimal(str(volume)),
                 success_in=False
             )
             serializer = self.get_serializer(bet)
@@ -405,19 +403,22 @@ class BetViewSet(BaseViewSet, mixins.UpdateModelMixin):
     @action(detail=False, methods=['put'])
     @transaction.atomic
     def confirm_bet(self, request):
+        print("Received data:", request.data)
         if request.user.username.strip() != 'front':
             raise PermissionDenied("API permission denied")
         b_id = request.data.get('b_id')
         tx_in = request.data.get('tx_in')
+        volume = request.data.get('volume')
         try:
             bet = Bet.objects.get(b_id=b_id)
             bet.tx_in = tx_in
             bet.success_in = True
+            bet.volume = Decimal(str(volume))
             bet.save()
             serializer = self.get_serializer(bet)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Bet.DoesNotExist:
-            return Response({'error': 'Pari non trouvé'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Bet not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

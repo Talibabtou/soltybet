@@ -12,7 +12,7 @@ const Navbar = () => {
  const [newsTexts] = useState([
    "Solty Bet Launch in v0.9, Feel free to share your feedback on discord",
    "Join our Discord community!",
-   "Follow us on Twitter @SoltyBetfor the latest news and announcements."
+   "Follow us on Twitter @SoltyBet for the latest news and announcements."
  ]);
  const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
 

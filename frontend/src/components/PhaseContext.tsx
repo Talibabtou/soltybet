@@ -63,7 +63,8 @@ export const PhaseProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     const handleMessage = (dataFromServer: WebSocketMessage) => {
-      console.log("Message reçu du WebSocket:", dataFromServer);
+      
+      
       if (dataFromServer.type === "info") {
         if (dataFromServer.text === "Payout") {
           

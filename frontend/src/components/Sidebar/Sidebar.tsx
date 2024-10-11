@@ -8,6 +8,7 @@ interface DataItem {
   wallet: string;
   volume?: number;
   gain?: number;
+  pnl?: number;
 }
 
 interface UserStats {
@@ -34,9 +35,26 @@ const Sidebar: React.FC = () => {
         tokenManager.getData<DataItem[]>('/users/top_volume/'),
         tokenManager.getData<DataItem[]>('/users/top_gain/')
       ]);
-      setData({ volume: volumeData, gain: gainData });
+      
+      const volumeMap = new Map(volumeData.map(item => [item.wallet, item.volume || 0]));
+      const gainMap = new Map(gainData.map(item => [item.wallet, item.gain || 0]));
+      
+      const allWallets = new Set([...volumeMap.keys(), ...gainMap.keys()]);
+      
+      const pnlData = Array.from(allWallets).map(wallet => {
+        const volume = volumeMap.get(wallet) || 0;
+        const gain = gainMap.get(wallet) || 0;
+        const pnl = gain - volume;
+        return { wallet, volume, gain, pnl };
+      });
+      
+      pnlData.sort((a, b) => b.pnl - a.pnl);
+      
+      
+      
+      setData({ volume: volumeData, gain: pnlData });
     } catch (error) {
-      console.error("Error while fetching top data.");
+      console.error("Error while fetching top data:");
     }
   }, []);
 
@@ -129,7 +147,7 @@ const Sidebar: React.FC = () => {
     <div className='sidebar'>
       <div className='tabs'>
         <button onClick={() => setActiveTab('volume')}>Volume</button>
-        <button onClick={() => setActiveTab('gain')}>Gain</button>
+        <button onClick={() => setActiveTab('PnL')}>PnL</button>
         {user && <button onClick={() => setActiveTab('user')}>My Stats</button>}
       </div>
       <div className='contentside'>
@@ -142,7 +160,7 @@ const Sidebar: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {data.volume.slice(0, 12).map((item, index) => (
+              {data.volume.slice(0, 10).map((item, index) => (
                 <tr key={index}>
                   <td className='wallet-column'>{item.wallet.slice(0, 7)}...</td>
                   <td className='amount-column'>{item.volume?.toFixed(2)}</td>
@@ -151,19 +169,24 @@ const Sidebar: React.FC = () => {
             </tbody>
           </table>
         )}
-        {activeTab === 'gain' && (
+        {activeTab === 'PnL' && (
           <table>
             <thead>
               <tr>
                 <th className='wallet-column'>Wallet</th>
-                <th className='amount-column'>Gain (SOL)</th>
+                <th className='amount-column'>PnL (SOL)</th>
               </tr>
             </thead>
             <tbody>
-              {data.gain.slice(0, 12).map((item, index) => (
+              {data.gain.slice(0, 10).map((item, index) => (
                 <tr key={index}>
                   <td className='wallet-column'>{item.wallet.slice(0, 7)}...</td>
-                  <td className='amount-column'>{item.gain?.toFixed(2)}</td>
+                  <td 
+                    className='amount-column' 
+                    style={{ color: (item.pnl || 0) >= 0 ? 'green' : 'red' }}
+                  >
+                    {item.pnl?.toFixed(2)}
+                  </td>
                 </tr>
               ))}
             </tbody>

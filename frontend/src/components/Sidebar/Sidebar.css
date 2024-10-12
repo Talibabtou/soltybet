@@ -53,3 +53,33 @@ th, td {
 .amount-column {
   width: 50%;
 }
+
+@media screen and (max-height: 830px) {
+  .contentside {
+    font-size: 14px;
+  }
+
+  th, td {
+    padding: 6px;
+  }
+
+  .tabs button {
+    font-size: 14px; 
+  }
+}
+
+
+@media screen and (max-height: 700px) {
+  .contentside {
+    font-size: 12px; 
+  }
+
+  th, td {
+    padding: 3px;
+  }
+
+  .tabs button {
+    font-size: 12px; 
+    padding: 3px 8px;
+  }
+}

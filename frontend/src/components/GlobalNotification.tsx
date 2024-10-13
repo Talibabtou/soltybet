@@ -97,7 +97,9 @@ const GlobalNotification: React.FC = () => {
       }
       setShouldFetchData(false);
     };
-    fetchPayoutData();
+    if (shouldFetchData) {
+      fetchPayoutData();
+    }
   }, [shouldFetchData, user, setShouldFetchData]);
 
   useEffect(() => {

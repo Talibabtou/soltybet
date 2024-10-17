@@ -60,6 +60,7 @@
   font-size: 36px;
   white-space: nowrap;
   margin-right: 20px;
+  color: white;
 }
 
 .balance {
@@ -70,6 +71,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 200px;
+  color: white;
 }
 
 .balance-unit {

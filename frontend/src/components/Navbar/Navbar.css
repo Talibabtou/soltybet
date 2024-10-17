@@ -63,6 +63,54 @@
   color: white;
 }
 
+.help-icon {
+  position: relative;
+  margin-right: 20px;
+}
+
+.question-mark {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  border-radius: 50%;
+  background-color: transparent;
+  color: #00ffff;
+  border: 2px solid #00ffff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 10px;
+  border-radius: 10px;
+  width: 200px;
+  display: none;
+  z-index: 1000;
+  border: 1px solid #00ffff;
+}
+
+.help-icon:hover .tooltip {
+  display: block;
+}
+
+.tooltip h3 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+.tooltip p {
+  font-size: 14px;
+  margin-bottom: 0;
+}
+
 .balance {
   font-size: 16px;
   font-family: 'Press Start 2P', cursive;

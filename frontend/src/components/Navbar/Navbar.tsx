@@ -126,6 +126,13 @@ const Navbar = () => {
        </div>
      </div>
      <div className="navbar-right">
+     <div className="help-icon">
+          <span className="question-mark">?</span>
+          <div className="tooltip">
+            <h3>How to Play</h3>
+            <p>Coming soon...</p>
+          </div>
+     </div>
        {connected && (
          <div className="balance">
            {(balance / LAMPORTS_PER_SOL).toFixed(2)}

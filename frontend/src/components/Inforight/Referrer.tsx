@@ -11,7 +11,7 @@ interface ReferrerProps {
 
 const Referrer: React.FC<ReferrerProps> = ({ user }: ReferrerProps) => {
   const { connected, publicKey } = useWallet();
-	const { refreshUser } = useContext(UserContext);
+  const { user, refreshUser } = useContext(UserContext);
   const [errorMessage, setErrorMessage] = useState('');
   const [referrerCode, setReferrerCode] = useState('');
   const [referrerMessage, setReferrerMessage] = useState<'idle' | 'success' | 'failure'>('idle');
@@ -103,7 +103,7 @@ const Referrer: React.FC<ReferrerProps> = ({ user }: ReferrerProps) => {
 
       {connected && hasReferrer && (
         <div className='AddedReferrer'>
-          <p>You already have a referrer.</p>
+          <p>Your wallet is reffered</p>
         </div>
       )}
 

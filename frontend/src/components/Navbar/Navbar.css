@@ -194,6 +194,7 @@
 
 .match-history {
   display: flex;
+  align-items: center; 
   justify-content: center;
   margin-top: 10px;
 }
@@ -203,6 +204,8 @@
   height: 12px;
   border-radius: 50%;
   margin: 0 3px;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .history-dot.red {

@@ -4,6 +4,7 @@ import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import '@solana/wallet-adapter-react-ui/styles.css';
 import './Navbar.css';
 import { Connection, clusterApiUrl, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { usePhase } from './../PhaseContext';
 
 const Navbar = () => {
  const { publicKey, connected } = useWallet();
@@ -15,6 +16,8 @@ const Navbar = () => {
    "Follow us on Twitter @SoltyBet for the latest news and announcements."
  ]);
  const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
+ const { winningTeam } = usePhase();
+ const [matchHistory, setMatchHistory] = useState<string[]>([]);
 
  const menuRef = useRef<HTMLDivElement>(null);
  const tickerRef = useRef<HTMLParagraphElement>(null);
@@ -104,6 +107,15 @@ const Navbar = () => {
    };
  }, [newsTexts.length]);
 
+ useEffect(() => {
+  if (winningTeam) {
+    setMatchHistory(prevHistory => {
+      const newHistory = [winningTeam, ...prevHistory].slice(0, 15);
+      return newHistory;
+    });
+  }
+ }, [winningTeam]);
+
  return (
   <nav className="navbar">
      <div className="navbar-left">
@@ -123,6 +135,11 @@ const Navbar = () => {
      <div className="navbar-center">
        <div className="news-ticker">
          <p ref={tickerRef}>{newsTexts[currentNewsIndex]}</p>
+       </div>
+       <div className="match-history">
+         {matchHistory.map((winner, index) => (
+           <div key={index} className={`history-dot ${winner.toLowerCase()}`}></div>
+         ))}
        </div>
      </div>
      <div className="navbar-right">

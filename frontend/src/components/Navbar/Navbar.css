@@ -190,6 +190,30 @@
   background-color: #555;
 }
 
+
+.match-history {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.history-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin: 0 3px;
+}
+
+.history-dot.red {
+  background-color: #ff6969;
+}
+
+.history-dot.blue {
+  background-color: #6767ff;
+}
+
+
+
 @media screen and (max-width: 1400px) {
   .navbar-center {
     padding-right: 0px;

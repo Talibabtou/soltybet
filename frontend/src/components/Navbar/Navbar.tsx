@@ -116,6 +116,7 @@ const Navbar = () => {
   }
  }, [winningTeam]);
 
+ 
  return (
   <nav className="navbar">
      <div className="navbar-left">

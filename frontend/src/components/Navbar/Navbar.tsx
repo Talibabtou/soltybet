@@ -138,6 +138,7 @@ const Navbar = () => {
          <p ref={tickerRef}>{newsTexts[currentNewsIndex]}</p>
        </div>
        <div className="match-history">
+       <span className="latest-label">Latest</span>
          {matchHistory.map((winner, index) => (
            <div key={index} className={`history-dot ${winner.toLowerCase()}`}></div>
          ))}

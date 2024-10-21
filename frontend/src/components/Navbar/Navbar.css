@@ -213,6 +213,13 @@
   background-color: #6767ff;
 }
 
+.latest-label {
+  margin-right: 10px;
+  font-size: 14px;
+  color: white;
+  font-weight: bold;
+}
+
 
 
 @media screen and (max-width: 1400px) {

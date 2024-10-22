@@ -68,6 +68,7 @@ async def twitch_chat_listener():
                                             phase["text"] = "Bets are locked"
                                             current_time = datetime.now()
                                             total_blue, total_red = handle_bets_locked(headers, match)
+                                            time.sleep(1)
                                             if total_red == 0 and total_blue > 0 or total_red > 0 and total_blue == 0:
                                                 executor.submit(handle_payout, headers, match, "Refund")
                                             if fighter_red and fighter_blue:

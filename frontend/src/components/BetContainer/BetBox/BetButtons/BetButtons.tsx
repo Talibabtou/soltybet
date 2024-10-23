@@ -65,7 +65,7 @@ const BetButtons = () => {
       await tokenManager.putData<Bet>('/bets/confirm_bet/', { b_id, tx_in, volume });
       return true;
     } catch (error) {
-      console.error('Error confirming bet:', error);
+      console.error('Error confirming bet');
       return false;
     }
   };

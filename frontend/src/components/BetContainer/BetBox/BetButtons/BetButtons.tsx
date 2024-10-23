@@ -60,13 +60,13 @@ const BetButtons = () => {
     }
   };
 
-  const confirmBetOnBackend = async (b_id: string, tx_in: string, volume: number) => {
+  const confirmBetOnBackend = async (b_id: string, tx_in: string, volume: number): Promise<boolean> => {
     try {
-      const response = await tokenManager.putData<Bet>('/bets/confirm_bet/', { b_id, tx_in, volume });
-      return response;
+      await tokenManager.putData<Bet>('/bets/confirm_bet/', { b_id, tx_in, volume });
+      return true;
     } catch (error) {
-      console.error('Error confirming bet.');
-      throw error;
+      console.error('Error confirming bet:', error);
+      return false;
     }
   };
 

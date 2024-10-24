@@ -65,7 +65,7 @@ const BetButtons = () => {
       await tokenManager.putData<Bet>('/bets/confirm_bet/', { b_id, tx_in, volume });
       return true;
     } catch (error) {
-      console.error('Error confirming bet:', error);
+      console.error('Error confirming bet');
       return false;
     }
   };
@@ -167,14 +167,34 @@ const BetButtons = () => {
         lastValidBlockHeight: lastValidBlockHeight,
         signature: signature
       });
-
+  
       if (confirmation.value.err) {
         throw new Error(`the transaction failed: ${JSON.stringify(confirmation.value.err)}`);
       }
-      setTransactionStatus('success');
-      await confirmBetOnBackend(betResponse.b_id, signature, betAmount);
-      setPendingBetId(null);
-      setUserHasBet(true);
+  
+    
+      let confirmationSuccess = false;
+      let retries = 3;
+  
+      while (!confirmationSuccess && retries > 0) {
+        confirmationSuccess = await confirmBetOnBackend(betResponse.b_id, signature, betAmount);
+        if (!confirmationSuccess) {
+          console.log(`Failed to confirm bet on backend. Retries left: ${retries}`);
+          retries--;
+          if (retries > 0) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+        }
+      }
+  
+      if (confirmationSuccess) {
+        setTransactionStatus('success');
+        setPendingBetId(null);
+        setUserHasBet(true);
+      } else {
+        throw new Error('Failed to confirm bet on backend after multiple attempts');
+      }
+  
     } catch (error) {
       console.error("Transaction failed.");
       let errorMessage = "Unknown error occurred";
@@ -186,6 +206,8 @@ const BetButtons = () => {
           errorMessage = "Betting is currently closed. Please try again, once the bets are open.";
         } else if (errorString.includes("User rejected")) {
           errorMessage = "Transaction was rejected by the user.";
+        } else if (errorString.includes("Failed to confirm bet on backend")) {
+          errorMessage = "Bet was placed on-chain but failed to register in our system. Please contact support.";
         } else {
           errorMessage = "Transaction failed. Please try again.";
         }
@@ -215,7 +237,7 @@ const BetButtons = () => {
     }
     setClickedButton(color);
     setTimeout(() => setClickedButton(null), 300);
-		await refreshUser();
+    await refreshUser();
   };
   return (
     <div className="buttons-container">

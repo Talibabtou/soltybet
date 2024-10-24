@@ -126,7 +126,7 @@ const Orderbook: React.FC = () => {
       setShowDonut(false);
       const timer = setTimeout(() => {
         setShowDonut(true);
-      }, 5000);
+      }, 7000);
 
       return () => clearTimeout(timer);
     }

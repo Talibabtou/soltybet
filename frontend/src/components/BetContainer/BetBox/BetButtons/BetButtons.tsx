@@ -5,7 +5,7 @@ import { useTransaction } from '../../../TxContext';
 import { Connection, PublicKey, Transaction, SystemProgram, TransactionInstruction, clusterApiUrl } from '@solana/web3.js';
 import { useBet } from '../../../BetProvider';
 import { UserContext } from '../../../../App';
-import { tokenManager, Bet, getData } from '../../../../api';
+import { tokenManager, Bet } from '../../../../api';
 import { snakeCase } from "snake-case";
 import { sha256 } from "@noble/hashes/sha256";
 import { Buffer } from 'buffer';
@@ -61,8 +61,10 @@ const BetButtons = () => {
   };
 
   const confirmBetOnBackend = async (b_id: string, tx_in: string, volume: number): Promise<boolean> => {
+    console.log(`Attempting to confirm bet: b_id=${b_id}, tx_in=${tx_in}, volume=${volume}`);
     try {
-      await tokenManager.putData<Bet>('/bets/confirm_bet/', { b_id, tx_in, volume });
+      const response = await tokenManager.putData<Bet>('/bets/confirm_bet/', { b_id, tx_in, volume });
+      console.log('Bet confirmation response:', response);
       return true;
     } catch (error) {
       console.error('Error confirming bet');
@@ -71,9 +73,10 @@ const BetButtons = () => {
   };
 
   const cancelBetOnBackend = async (b_id: string) => {
+    console.log(`Attempting to cancel bet: b_id=${b_id}`);
     try {
       const response = await tokenManager.deleteData(`/bets/cancel_bet/?b_id=${b_id}`);
-      
+      console.log('Bet cancellation response:', response);
       return response;
     } catch (error) {
       console.error('Error canceling bet.');
@@ -107,12 +110,14 @@ const BetButtons = () => {
           console.error("Error trying to get referrer wallet.");
         }
       }
+      console.log('Placing bet on backend');
       betResponse = await placeBetOnBackend({
         u_id: user?.u_id,
         m_id: latestMatch.m_id,
         team: color,
         volume: betAmount
       });
+      console.log('Backend bet response:', betResponse);
       if (!betResponse || !betResponse.b_id) {
         throw new Error('Failed to create bet: Invalid response from server');
       }
@@ -177,6 +182,7 @@ const BetButtons = () => {
       let retries = 3;
   
       while (!confirmationSuccess && retries > 0) {
+        console.log(`Attempting to confirm bet on backend. Attempt ${4 - retries}/3`);
         confirmationSuccess = await confirmBetOnBackend(betResponse.b_id, signature, betAmount);
         if (!confirmationSuccess) {
           console.log(`Failed to confirm bet on backend. Retries left: ${retries}`);
@@ -188,6 +194,7 @@ const BetButtons = () => {
       }
   
       if (confirmationSuccess) {
+        console.log('Bet successfully confirmed on backend');
         setTransactionStatus('success');
         setPendingBetId(null);
         setUserHasBet(true);

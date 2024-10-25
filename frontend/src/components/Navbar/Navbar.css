@@ -197,6 +197,7 @@
   align-items: center; 
   justify-content: center;
   margin-top: 10px;
+  
 }
 
 .history-dot {
@@ -220,7 +221,7 @@
   margin-right: 10px;
   font-size: 14px;
   color: white;
-  font-weight: bold;
+  font-family: 'Orbitron', sans-serif;
 }
 
 

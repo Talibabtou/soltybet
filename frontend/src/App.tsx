@@ -26,6 +26,7 @@ import "@solana/wallet-adapter-react-ui/styles.css";
 export const UserContext = React.createContext<{
   user: User | null;
   refreshUser: () => Promise<void>;
+  
 }>({ user: null, refreshUser: async () => {} });
 
 const AppContent: React.FC = () => {
@@ -38,6 +39,7 @@ const AppContent: React.FC = () => {
         try {
           await tokenManager.getToken();
           let userData = await tokenManager.postData<User>('/users/', { wallet: wallet.publicKey.toString() });
+          
           setUser(userData);
         } catch (error) {
           console.error('Error getting or creating user.');
@@ -72,6 +74,7 @@ const AppContent: React.FC = () => {
       </div>
       <div className="app-content">
         <UserContext.Provider value={{ user, refreshUser }}>
+          
           <div className="app">
             <Navbar />
             <div className="main-content">
@@ -82,10 +85,11 @@ const AppContent: React.FC = () => {
             <div className="betcontent">
               <Orderbook />
               <BetContainer />
+              <GlobalNotification />
               <Inforight />
             </div>
           </div>
-          <GlobalNotification />
+          
         </UserContext.Provider>
       </div>
     </>

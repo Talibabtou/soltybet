@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useCallback, useRef, useContext } from 'react';
 import { useTransaction } from './TxContext';
+import { useWallet } from '@solana/wallet-adapter-react';
+
 import { PhaseContext } from './PhaseContext';
-import { UserContext } from '../App';
+
 import { useMatch } from './MatchContext';
 import { tokenManager } from '../api';
 
@@ -14,10 +16,12 @@ interface Notification {
 }
 
 const GlobalNotification: React.FC = () => {
+  
+  
   const { transactionStatus, errorMessage, pendingBetId, setTransactionStatus, setPendingBetId } = useTransaction();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const { payoutId, shouldFetchData, setShouldFetchData, shouldFetchRefund, setShouldFetchRefund } = useContext(PhaseContext);
-  const { user } = useContext(UserContext);
+  const { publicKey } = useWallet();
   const { latestMatch } = useMatch();
   const pendingNotificationRef = useRef<number | null>(null);
 
@@ -74,40 +78,74 @@ const GlobalNotification: React.FC = () => {
     }
   }, [transactionStatus, pendingBetId, setTransactionStatus, setPendingBetId]);
 
+  
   useEffect(() => {
-    const fetchPayoutData = async () => {
-      if (!shouldFetchData || !user || !payoutId) {
+    console.log('Payout effect triggered:', { shouldFetchData, payoutId, publicKey });
+    
+    if (!shouldFetchData) {
+      console.log('shouldFetchData is false, skipping payout fetch');
+      return;
+    }
+  
+    const fetchPayoutData = async (retries = 3, delay = 2000) => {
+      if (!payoutId || !publicKey) {
+        console.log('Conditions not met for fetching payout data:', { 
+          payoutId: payoutId ? 'exists' : 'missing', 
+          publicKey: publicKey ? publicKey.toString() : 'null'
+        });
+        setShouldFetchData(false);
         return;
       }
-
+  
       try {
-        const data = await tokenManager.getData<{ totalPayout: number, tx_out: string }>('/users/actual_wins_data/', {
-          m_id: payoutId,
-          wallet: user.wallet
-        });
-        
-        const payout = data.totalPayout;
-        const txOut = data.tx_out;
-        if (payout > 0) {
-          addNotification(`${payout.toFixed(2)} SOL`, '#3BD825', 'payout', txOut);
+        for (let i = 0; i < retries; i++) {
+          console.log(`Attempt ${i + 1} to fetch payout data`);
+          const data = await tokenManager.getData<{ totalPayout: number, tx_out: string }>('/users/actual_wins_data/', {
+            m_id: payoutId,
+            wallet: publicKey.toString()
+          });
+          console.log(`Attempt ${i + 1}: Payout data received:`, data);
+          const payout = data.totalPayout;
+          const txOut = data.tx_out;
+          
+          if (payout > 0) {
+            console.log('Adding payout notification');
+            addNotification(`${payout.toFixed(2)} SOL`, '#3BD825', 'payout', txOut);
+            return; 
+          } else {
+            console.log(`Attempt ${i + 1}: Payout is 0, retrying...`);
+            if (i < retries - 1) {
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
+          }
         }
+        
+        console.log('Max retries reached, no positive payout received');
+        addNotification('No payout received after multiple attempts', '#FFA500');
       } catch (error) {
-        console.error('Error fetching payout data.');
+        console.error('Error in fetchPayoutData:', error);
         addNotification('Error fetching payout data', '#D82525');
+      } finally {
+        setShouldFetchData(false); 
+        console.log("set shouldFetchData to false :", shouldFetchData);
       }
-      setShouldFetchData(false);
     };
-    if (shouldFetchData) {
-      fetchPayoutData();
-    }
-  }, [shouldFetchData, user, setShouldFetchData]);
-
+  
+    fetchPayoutData();
+  
+    return () => {
+      setShouldFetchData(false); 
+    };
+  }, [shouldFetchData, payoutId, publicKey, addNotification, setShouldFetchData]);
+  
+  
   useEffect(() => {
     const fetchRefundData = async () => {
-     
+      console.log('Attempting to fetch refund data:', { shouldFetchRefund, publicKey, latestMatch });
 
-      if (!shouldFetchRefund || !user || !latestMatch) {
-        
+      if (!shouldFetchRefund || !publicKey || !latestMatch) {
+        console.log('Conditions not met for fetching refund data');
+      
         return;
       }
 
@@ -115,18 +153,19 @@ const GlobalNotification: React.FC = () => {
        
         const data = await tokenManager.getData<{ totalPayout: number, tx_out: string }>('/users/actual_wins_data/', {
           m_id: latestMatch.m_id,
-          wallet: user.wallet
+          wallet: publicKey.toString()
         });
         
-        
+        console.log('Refund data received:', data);
         const refund = data.totalPayout;
         const txOut = data.tx_out;
         
         if (refund > 0) {
-          
+          console.log('Adding refund notification');
           addNotification(`${refund.toFixed(2)} SOL`, '#2596be', 'refund', txOut);
         } else {
-          
+          console.log('Refund is 0, no notification added');
+      
         }
       } catch (error) {
         console.error('Error fetching refund data.');
@@ -141,7 +180,7 @@ const GlobalNotification: React.FC = () => {
       
       fetchRefundData();
     }
-  }, [shouldFetchRefund, user, setShouldFetchRefund]);
+  }, [shouldFetchRefund, publicKey, setShouldFetchRefund, addNotification]);
 
   const shortenTxOut = (txOut: string) => {
     if (txOut.length > 20) {
@@ -284,4 +323,4 @@ const GlobalNotification: React.FC = () => {
     }
   };
 
-  export default React.memo(GlobalNotification);
+  export default GlobalNotification;

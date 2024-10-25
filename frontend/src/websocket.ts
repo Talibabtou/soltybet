@@ -1,9 +1,11 @@
 import { postData } from './api';
 
 let socket: WebSocket | null = null;
-let reconnectInterval: number = 5000;
-let retryCount = 0;
-const maxRetries = 5;
+let isConnecting: boolean = false;
+let reconnectTimeoutId: number | null = null;
+let reconnectAttempts: number = 0;
+const maxReconnectAttempts: number = 5;
+const initialReconnectDelay: number = 1000; // 1 second
 
 interface WSTokenResponse {
   token: string;
@@ -15,75 +17,110 @@ const getWsToken = async (): Promise<string> => {
     const data = await postData<WSTokenResponse>('/ws_token/', {});
     return data.token;
   } catch (error) {
-    console.error('Error getting new WebSocket token.');
+    console.error('Error getting new WebSocket token:', error);
     throw error;
   }
 };
 
+const getReconnectDelay = (): number => {
+  return Math.min(30000, initialReconnectDelay * Math.pow(2, reconnectAttempts)); // Max 30 seconds
+};
+
+const resetReconnectAttempts = () => {
+  reconnectAttempts = 0;
+};
+
 const connectWebSocket = async (onMessage: (data: any) => void): Promise<WebSocket> => {
-  if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+  if (isConnecting) {
+    console.log('WebSocket connection already in progress');
+    return socket!;
+  }
+
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    console.log('WebSocket already connected');
     return socket;
   }
+
+  isConnecting = true;
 
   try {
     const token = await getWsToken();
     const wsUrl = `wss://solty.bet/ws/phase/?token=${token}`;
+    console.log('Connecting to WebSocket URL:', wsUrl);
 
     socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {
-      retryCount = 0;
+      console.log('WebSocket connected successfully');
+      isConnecting = false;
+      resetReconnectAttempts();
     };
 
     socket.onmessage = (event) => {
+      console.log('WebSocket message received:', event.data);
       const data = JSON.parse(event.data);
       onMessage(data);
     };
 
-    socket.onclose = () => {
-      if (retryCount < maxRetries) {
-        retryCount++;
-        setTimeout(() => {
-          connectWebSocket(onMessage);
-        }, reconnectInterval);
-      } else {
-        console.error("Max retries reached. WebSocket connection failed.");
-      }
+    socket.onclose = (event) => {
+      console.log('WebSocket closed:', event.code, event.reason);
+      isConnecting = false;
+      scheduleReconnect(onMessage);
     };
 
-    socket.onerror = () => {
-      console.error("WebSocket Error.");
+    socket.onerror = (error) => {
+      console.error("WebSocket Error:", error);
+      isConnecting = false;
     };
 
     return socket;
   } catch (error) {
-    console.error("Error connecting to WebSocket.");
-    if (retryCount < maxRetries) {
-      retryCount++;
-      setTimeout(() => {
-        connectWebSocket(onMessage);
-      }, reconnectInterval);
-    } else {
-      console.error("Max retries reached. WebSocket connection failed.");
-    }
+    console.error("Error connecting to WebSocket:", error);
+    isConnecting = false;
+    scheduleReconnect(onMessage);
     throw error;
   }
+};
+
+const scheduleReconnect = (onMessage: (data: any) => void) => {
+  if (reconnectAttempts >= maxReconnectAttempts) {
+    console.error("Max reconnect attempts reached. WebSocket connection failed.");
+    return;
+  }
+
+  const delay = getReconnectDelay();
+  console.log(`Scheduling reconnect attempt ${reconnectAttempts + 1} in ${delay}ms`);
+
+  if (reconnectTimeoutId !== null) {
+    clearTimeout(reconnectTimeoutId);
+  }
+
+  reconnectTimeoutId = window.setTimeout(() => {
+    reconnectAttempts++;
+    connectWebSocket(onMessage).catch(() => {
+      // If connectWebSocket throws, it will already have scheduled the next reconnect
+    });
+  }, delay);
 };
 
 const sendMessage = (message: any): void => {
   if (socket && socket.readyState === WebSocket.OPEN) {
     socket.send(JSON.stringify(message));
   } else {
-    console.error("WebSocket client is not connected.");
+    console.error("WebSocket is not connected. Cannot send message.");
   }
 };
 
 const closeWebSocket = (): void => {
+  if (reconnectTimeoutId !== null) {
+    clearTimeout(reconnectTimeoutId);
+    reconnectTimeoutId = null;
+  }
   if (socket) {
     socket.close();
-  } else {
-    console.error("WebSocket client is not connected.");
   }
+  isConnecting = false;
+  resetReconnectAttempts();
 };
 
 export { connectWebSocket, closeWebSocket, sendMessage };

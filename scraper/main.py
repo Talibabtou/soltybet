@@ -57,7 +57,6 @@ async def twitch_chat_listener():
 										if "Bets are OPEN" in msg:
 											sync_time = True
 											total_blue, total_red = 0.0, 0.0
-											await send_phase(phase, fighter_red, fighter_blue, total_blue, total_red, match, headers)
 											phase["text"] = "Bets are OPEN!"
 											red_fighter = re.search(r'for (.*?) vs', msg)
 											blue_fighter = re.search(r'vs (.*?)!', msg)

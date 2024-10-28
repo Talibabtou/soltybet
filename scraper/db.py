@@ -106,27 +106,26 @@ def handle_payout(headers, match, info):
 		if os.path.getsize(file_path) == 0:
 			time.sleep(0.5)
 			continue
-		time.sleep(0.5)
+
 		try:
 			with open(file_path, 'r') as file:
 				data = json.load(file)
 				if not data:
-					time.sleep(0.5)
 					continue
 
 			bet_response = requests.put('http://backend:8000/api/bets/bet_payout/',
 										json=data, headers=headers, timeout=10)
 			bet_response.raise_for_status()
-
+			time.sleep(0.1)
 			user_response = requests.put('http://backend:8000/api/users/user_payout/',
 										json=data, headers=headers, timeout=10)
 			user_response.raise_for_status()
 
 			print(json.dumps(data, indent=2))
-			time.sleep(1)
 			asyncio.run(send_info(info, match["m_id"], headers))
 			clear_file('/app/history/last_match.json')
 			return
+
 		except FileNotFoundError:
 			time.sleep(0.5)
 		except json.JSONDecodeError:

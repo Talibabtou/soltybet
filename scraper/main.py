@@ -22,7 +22,7 @@ async def twitch_chat_listener():
 	fighter_red, fighter_blue, match, total_blue, total_red = None, None, None, None, None
 	phase = {"text": None}
 	sync_time = False
-	
+
 	while True:
 		try:
 			async with websockets.connect(TWITCH_WS_URL) as websocket:
@@ -30,7 +30,7 @@ async def twitch_chat_listener():
 				await websocket.send(f'CAP REQ :twitch.tv/tags twitch.tv/commands')
 				await websocket.send(f'JOIN #{CHANNEL_NAME}')
 				print(f"Joining channel: #{CHANNEL_NAME}")
-				
+
 				with ProcessPoolExecutor() as executor:
 					while True:
 						try:
@@ -55,6 +55,8 @@ async def twitch_chat_listener():
 										print(f"Target message: {username}: {msg}")
 										if "Bets are OPEN" in msg:
 											sync_time = True
+											fighter_red, fighter_blue, match, total_blue, total_red = None, None, None, None, None
+											await send_phase(phase, fighter_red, fighter_blue, total_blue, total_red, match, headers)
 											phase["text"] = "Bets are OPEN!"
 											red_fighter = re.search(r'for (.*?) vs', msg)
 											blue_fighter = re.search(r'vs (.*?)!', msg)
@@ -67,7 +69,7 @@ async def twitch_chat_listener():
 										elif "Bets are locked" in msg and sync_time:
 											phase["text"] = "Bets are locked"
 											current_time = datetime.now()
-											time.sleep(1)
+											time.sleep(0.5)
 											total_blue, total_red = handle_bets_locked(headers, match)
 											if total_red == 0 and total_blue > 0 or total_red > 0 and total_blue == 0:
 												executor.submit(handle_payout, headers, match, "Refund")

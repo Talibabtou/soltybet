@@ -6,10 +6,8 @@ import { loadConfig } from './config.js';
 
 const config = loadConfig();
 
-function getInstructionIdentifier(instructionName) {
-	const hash = crypto.createHash('sha256').update(instructionName).digest(hex);
-	return hash.slice(0, 16);
-}
+const hash = crypto.createHash('sha256').update(instructionName).digest();
+	return hash.slice(0, 8);
 
 async function setGateState(open) {
 	const keypairFile = fs.readFileSync(config.oracle_wallet, 'utf-8');

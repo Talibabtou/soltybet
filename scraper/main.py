@@ -19,7 +19,8 @@ secret_file = 'scraper_pass'
 async def twitch_chat_listener():
 	token_data, token_expiry, headers = initialize_token(user, secret_file)
 	current_time = None
-	fighter_red, fighter_blue, match, total_blue, total_red = None, None, None, None, None
+	fighter_red, fighter_blue, match = None, None, None
+	total_blue, total_red = 0.0, 0.0
 	phase = {"text": None}
 	sync_time = False
 
@@ -55,7 +56,7 @@ async def twitch_chat_listener():
 										print(f"Target message: {username}: {msg}")
 										if "Bets are OPEN" in msg:
 											sync_time = True
-											total_blue, total_red = None, None
+											total_blue, total_red = 0.0, 0.0
 											await send_phase(phase, fighter_red, fighter_blue, total_blue, total_red, match, headers)
 											phase["text"] = "Bets are OPEN!"
 											red_fighter = re.search(r'for (.*?) vs', msg)

@@ -8,7 +8,7 @@ const config = loadConfig();
 
 const sighash = (nameSpace, ixName) => {
 	const preimage = `${nameSpace}:${ixName}`;
-	return Buffer.from(sha256(preimage)).slice(0, 8);
+	return Buffer.from(sha256(preimage)).subarray(0, 8);
 };
 
 const loadKeypair = (path) => {

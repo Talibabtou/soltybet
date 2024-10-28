@@ -6,11 +6,21 @@ import time
 import os
 
 def get_current_block_id():
-	result = subprocess.run(['node', 'javascript/getBlock.js'], capture_output=True, text=True)
-	if result.returncode != 0:
-		logger.error("Failed to get current block ID: %s", result.stderr)
-		return None
-	return int(result.stdout.strip())
+	max_retries = 3
+	for attempt in range(max_retries):
+		try:
+			result = subprocess.run(['node', 'javascript/getBlock.js'], capture_output=True, text=True)
+			if result.returncode == 0 and result.stdout.strip():
+				return int(result.stdout.strip())
+			logger.warning(f"Attempt {attempt + 1}/{max_retries}: Invalid or empty response")
+			if attempt < max_retries - 1:
+				time.sleep(2 ** attempt)
+		except (ValueError, subprocess.CalledProcessError) as e:
+			logger.error(f"Attempt {attempt + 1}/{max_retries}: {str(e)}")
+			if attempt < max_retries - 1:
+				time.sleep(2 ** attempt)
+	logger.error("Failed to get current block ID after all retries")
+	return None
 
 def load_bets(open_timestamp: int, close_timestamp: int) -> pd.DataFrame:
 	"""Load bets from the blockchain within the given timestamps."""

@@ -55,11 +55,11 @@ async def twitch_chat_listener(context: MatchContext):
           except asyncio.exceptions.IncompleteReadError:
             logging.warning("IncompleteReadError occurred. Reconnecting...")
             send_to_discord("IncompleteReadError occurred. Reconnecting...")
-            break  # Break the inner loop to reconnect
+            break
           except websockets.exceptions.ConnectionClosedError:
             logging.warning("IncompleteReadError occurred. Reconnecting...")
             send_to_discord("ConnectionClosedError occurred. Reconnecting...")
-            break  # Break the inner loop to reconnect
+            break
     except Exception as e:
       logging.error(f"An error occurred: {e}. Attempting to reconnect in 5 seconds...")
       await asyncio.sleep(5)

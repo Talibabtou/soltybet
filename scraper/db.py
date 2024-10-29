@@ -90,7 +90,7 @@ def handle_wins(phase, fighter_red, fighter_blue, current_time, match, headers):
 		send_to_discord(f"db: win phase: red: {fighter_red} - blue: {fighter_blue} - match: {match} - winner: {winner} - duration: {duration_str} - {e}")
 	except Exception as e:
 		send_to_discord(f"db: Unexpected error: {e}")
-		
+
 def handle_payout(headers, match, info):
 	file_path = '/app/history/last_match.json'
 	start_time = time.time()
@@ -98,49 +98,43 @@ def handle_payout(headers, match, info):
 
 	while True:
 		if time.time() - start_time > timeout:
-			print("db: Payout request timed out after 30 seconds")
+			print("scraper: Payout request timed out after 30 seconds")
 			return
-		if not os.path.exists(file_path):
-			time.sleep(0.5)
-			continue
-		if os.path.getsize(file_path) == 0:
-			time.sleep(0.5)
-			continue
-
 		try:
+			if not os.path.exists(file_path) or os.path.getsize(file_path) == 0:
+				time.sleep(0.5)
+				continue
+			time.sleep(1)
 			with open(file_path, 'r') as file:
 				data = json.load(file)
-				if not data:
-					continue
-
-			bet_response = requests.put('http://backend:8000/api/bets/bet_payout/',
-										json=data, headers=headers, timeout=10)
+			if not data or not isinstance(data, list):
+				time.sleep(0.5)
+				continue
+			bet_response = requests.put(
+				'http://backend:8000/api/bets/bet_payout/',
+				json=data, 
+				headers=headers, 
+				timeout=10)
 			bet_response.raise_for_status()
-			time.sleep(0.1)
-			user_response = requests.put('http://backend:8000/api/users/user_payout/',
-										json=data, headers=headers, timeout=10)
+			time.sleep(0.5)
+			user_response = requests.put(
+				'http://backend:8000/api/users/user_payout/',
+				json=data, 
+				headers=headers, 
+				timeout=10)
 			user_response.raise_for_status()
-
 			print(json.dumps(data, indent=2))
 			asyncio.run(send_info(info, match["m_id"], headers))
-			clear_file('/app/history/last_match.json')
+			clear_file(file_path)
 			return
-
-		except FileNotFoundError:
+		except (FileNotFoundError, json.JSONDecodeError):
 			time.sleep(0.5)
-		except json.JSONDecodeError:
-			print("Error decoding JSON from /app/history/last_match.json. Retrying...")
-			time.sleep(0.5)
-		except requests.Timeout:
-			print("Request timed out. Retrying...")
+			continue
 		except requests.RequestException as e:
-			error_message = f"db: Error processing payout: {e.response.status_code} {e.response.reason} for url: {e.response.url}"
-			if e.response.text:
-				error_message += f"\nResponse content: {e.response.text[:200]}..."
-			send_to_discord(error_message)
+			send_to_discord(f"scraper: API Error during payout: {str(e)}")
 			return
 		except Exception as e:
-			send_to_discord(f"db: Unexpected error during payout: {str(e)}")
+			send_to_discord(f"scraper: Unexpected error during payout: {str(e)}")
 			return
 
 def process_match_history(file_path):

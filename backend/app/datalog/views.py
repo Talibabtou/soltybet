@@ -470,17 +470,53 @@ class BetViewSet(BaseViewSet, mixins.UpdateModelMixin):
         if not m_id:
             return Response({'error': 'm_id is required'}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            total_red = Bet.objects.filter(m_id__m_id=m_id, team='red').aggregate(Sum('volume'))
-            total_blue = Bet.objects.filter(m_id__m_id=m_id, team='blue').aggregate(Sum('volume'))
+            # Vérifions d'abord tous les paris pour ce match
+            all_bets = Bet.objects.filter(m_id__m_id=m_id)
+            print(f"\nDébug des paris pour le match {m_id}:")
+            print(f"Nombre total de paris: {all_bets.count()}")
+            
+            # Affichons les détails de chaque pari
+            for bet in all_bets:
+                print(f"""
+                Pari ID: {bet.b_id}
+                Équipe: {bet.team}
+                Volume: {bet.volume}
+                Success_in: {bet.success_in}
+                Tx_in: {bet.tx_in}
+                """)
+
+            # Calculons les totaux
+            total_red = Bet.objects.filter(m_id__m_id=m_id, team='red').aggregate(
+                total=Sum('volume'),
+                count=Count('id')
+            )
+            total_blue = Bet.objects.filter(m_id__m_id=m_id, team='blue').aggregate(
+                total=Sum('volume'),
+                count=Count('id')
+            )
+
+            print(f"""
+            Résumé des volumes:
+            Rouge: {total_red['total'] or 0} ({total_red['count']} paris)
+            Bleu: {total_blue['total'] or 0} ({total_blue['count']} paris)
+            """)
+
             match = get_object_or_404(Match, m_id=m_id)
-            match.vol_red = total_red['volume__sum'] or 0
-            match.vol_blue = total_blue['volume__sum'] or 0
+            match.vol_red = total_red['total'] or 0
+            match.vol_blue = total_blue['total'] or 0
             match.save()
+
             return Response({
-                "total_red": float(total_red['volume__sum'] or 0),
-                "total_blue": float(total_blue['volume__sum'] or 0),
+                "total_red": float(total_red['total'] or 0),
+                "total_blue": float(total_blue['total'] or 0),
+                "debug_info": {
+                    "red_bets_count": total_red['count'],
+                    "blue_bets_count": total_blue['count'],
+                    "total_bets": all_bets.count()
+                }
             }, status=status.HTTP_200_OK)
         except Exception as e:
+            print(f"Erreur lors du calcul des volumes: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['put'])

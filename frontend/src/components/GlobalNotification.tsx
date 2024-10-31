@@ -1,9 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef, useContext } from 'react';
 import { useTransaction } from './TxContext';
 import { useWallet } from '@solana/wallet-adapter-react';
-
 import { PhaseContext } from './PhaseContext';
-
 import { useMatch } from './MatchContext';
 import { tokenManager } from '../api';
 
@@ -15,9 +13,13 @@ interface Notification {
   txOut?: string;
 }
 
+interface WinsDataResponse {
+  totalPayout: number;
+  tx_out: string;
+  status: string;
+}
+
 const GlobalNotification: React.FC = () => {
-  
-  
   const { transactionStatus, errorMessage, pendingBetId, setTransactionStatus, setPendingBetId } = useTransaction();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const { payoutId, shouldFetchData, setShouldFetchData, shouldFetchRefund, setShouldFetchRefund } = useContext(PhaseContext);
@@ -34,11 +36,9 @@ const GlobalNotification: React.FC = () => {
       txOut
     };
     setNotifications(prev => [...prev, newNotification]);
-  
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== newNotification.id));
     }, 7000);
-
     return newNotification.id;
   }, []);
 
@@ -46,6 +46,7 @@ const GlobalNotification: React.FC = () => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   }, []);
 
+  // Effet pour les notifications de transaction
   useEffect(() => {
     if (transactionStatus !== 'idle') {
       const backgroundColor = getBackgroundColor(transactionStatus);
@@ -66,6 +67,7 @@ const GlobalNotification: React.FC = () => {
     }
   }, [transactionStatus, errorMessage, setTransactionStatus, addNotification, removeNotification]);
 
+  // Effet pour le timeout des transactions
   useEffect(() => {
     if (transactionStatus === 'pending' && pendingBetId) {
       const timeoutId = setTimeout(() => {
@@ -73,115 +75,84 @@ const GlobalNotification: React.FC = () => {
         setTransactionStatus('failure');
         setPendingBetId(null);
       }, 60000);
-
       return () => clearTimeout(timeoutId);
     }
   }, [transactionStatus, pendingBetId, setTransactionStatus, setPendingBetId]);
 
   
   useEffect(() => {
-    console.log('Payout effect triggered:', { shouldFetchData, payoutId, publicKey });
-    
-    if (!shouldFetchData) {
-      console.log('shouldFetchData is false, skipping payout fetch');
-      return;
-    }
+    if (shouldFetchData && payoutId && publicKey) {
+      const fetchPayoutData = async () => {
+        try {
+          console.log('Attempting to fetch payout data:', {
+            payoutId,
+            wallet: publicKey.toString()
+          });
   
-    const fetchPayoutData = async (retries = 3, delay = 2000) => {
-      if (!payoutId || !publicKey) {
-        console.log('Conditions not met for fetching payout data:', { 
-          payoutId: payoutId ? 'exists' : 'missing', 
-          publicKey: publicKey ? publicKey.toString() : 'null'
-        });
-        setShouldFetchData(false);
-        return;
-      }
-  
-      try {
-        for (let i = 0; i < retries; i++) {
-          console.log(`Attempt ${i + 1} to fetch payout data`);
-          const data = await tokenManager.getData<{ totalPayout: number, tx_out: string }>('/users/actual_wins_data/', {
+          const data = await tokenManager.getData<WinsDataResponse>('/users/actual_wins_data/', {
             m_id: payoutId,
             wallet: publicKey.toString()
           });
-          console.log(`Attempt ${i + 1}: Payout data received:`, data);
-          const payout = data.totalPayout;
-          const txOut = data.tx_out;
           
-          if (payout > 0) {
-            console.log('Adding payout notification');
-            addNotification(`${payout.toFixed(2)} SOL`, '#3BD825', 'payout', txOut);
-            return; 
-          } else {
-            console.log(`Attempt ${i + 1}: Payout is 0, retrying...`);
-            if (i < retries - 1) {
-              await new Promise(resolve => setTimeout(resolve, delay));
-            }
+          console.log('Full payout response from API:', data);
+          
+          if (data.status === 'completed' && data.tx_out && data.totalPayout > 0) {
+            addNotification(
+              `${data.totalPayout.toFixed(2)} SOL`,
+              '#3BD825',
+              'payout',
+              data.tx_out
+            );
           }
+        } catch (error) {
+          console.error('Error fetching payout data:', error);
+          addNotification('Error fetching payout data', '#D82525');
+        } finally {
+          setShouldFetchData(false);
         }
-        
-        console.log('Max retries reached, no positive payout received');
-        addNotification('No payout received after multiple attempts', '#FFA500');
-      } catch (error) {
-        console.error('Error in fetchPayoutData:', error);
-        addNotification('Error fetching payout data', '#D82525');
-      } finally {
-        setShouldFetchData(false); 
-        console.log("set shouldFetchData to false :", shouldFetchData);
-      }
-    };
+      };
   
-    fetchPayoutData();
-  
-    return () => {
-      setShouldFetchData(false); 
-    };
+      fetchPayoutData();
+    }
   }, [shouldFetchData, payoutId, publicKey, addNotification, setShouldFetchData]);
   
   
   useEffect(() => {
-    const fetchRefundData = async () => {
-      console.log('Attempting to fetch refund data:', { shouldFetchRefund, publicKey, latestMatch });
-
-      if (!shouldFetchRefund || !publicKey || !latestMatch) {
-        console.log('Conditions not met for fetching refund data');
-      
-        return;
-      }
-
-      try {
-       
-        const data = await tokenManager.getData<{ totalPayout: number, tx_out: string }>('/users/actual_wins_data/', {
-          m_id: latestMatch.m_id,
-          wallet: publicKey.toString()
-        });
-        
-        console.log('Refund data received:', data);
-        const refund = data.totalPayout;
-        const txOut = data.tx_out;
-        
-        if (refund > 0) {
-          console.log('Adding refund notification');
-          addNotification(`${refund.toFixed(2)} SOL`, '#2596be', 'refund', txOut);
-        } else {
-          console.log('Refund is 0, no notification added');
-      
+    if (shouldFetchRefund && publicKey && latestMatch) {
+      const fetchRefundData = async () => {
+        try {
+          console.log('Attempting to fetch refund data:', {
+            matchId: latestMatch.m_id,
+            wallet: publicKey.toString()
+          });
+  
+          const data = await tokenManager.getData<WinsDataResponse>('/users/actual_wins_data/', {
+            m_id: latestMatch.m_id,
+            wallet: publicKey.toString()
+          });
+          
+          console.log('Full refund response from API:', data);
+          
+          if (data.status === 'completed' && data.tx_out && data.totalPayout > 0) {
+            addNotification(
+              `${data.totalPayout.toFixed(2)} SOL`,
+              '#2596be',
+              'refund',
+              data.tx_out
+            );
+          }
+        } catch (error) {
+          console.error('Error fetching refund data:', error);
+          addNotification('Error fetching refund data', '#D82525');
+        } finally {
+          setShouldFetchRefund(false);
         }
-      } catch (error) {
-        console.error('Error fetching refund data.');
-        addNotification('Error fetching refund data', '#D82525');
-      } finally {
-        
-        setShouldFetchRefund(false);
-      }
-    };
-
-    if (shouldFetchRefund) {
-      
+      };
+  
       fetchRefundData();
     }
-  }, [shouldFetchRefund, publicKey, setShouldFetchRefund, addNotification]);
-
+  }, [shouldFetchRefund, publicKey, latestMatch, setShouldFetchRefund, addNotification]);
+  
   const shortenTxOut = (txOut: string) => {
     if (txOut.length > 20) {
       return `${txOut.substring(0, 10)}...${txOut.substring(txOut.length - 10)}`;

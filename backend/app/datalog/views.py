@@ -188,34 +188,57 @@ class UserViewSet(BaseViewSet, mixins.UpdateModelMixin):
     def actual_wins_data(self, request):
         if request.user.username.strip() != 'front':
             raise PermissionDenied("API permission denied")
+        
         m_id = request.query_params.get('m_id')
         wallet = request.query_params.get('wallet')
+        
         if not m_id or not wallet:
             logger.warning("Bad request: m_id and wallet are required")
             return Response({'error': 'm_id and wallet are required'}, status=status.HTTP_400_BAD_REQUEST)
+        
         try:
             user = User.objects.get(wallet=wallet)
             match = Match.objects.get(m_id=m_id)
+            
+            logger.info(f"Processing payout for match {m_id} and wallet {wallet}")
+            
             invalid_match = Bet.objects.filter(m_id=match, invalid_match=True).exists()
-            if invalid_match:
-                bets = Bet.objects.filter(m_id=match, u_id=user, payout__isnull=False)
-            else:
-                winning_team = 'red' if match.winner_id == match.red_id else 'blue'
-                bets = Bet.objects.filter(m_id=match, u_id=user, team=winning_team, payout__isnull=False)
-            total_payout = bets.aggregate(Sum('payout'))['payout__sum'] or 0
-            tx_out = bets.values_list('tx_out', flat=True).first()
+            
+            # Utiliser tx_out au lieu de success_out
+            bets_query = Bet.objects.filter(
+                m_id=match,
+                u_id=user,
+                payout__isnull=False,
+                tx_out__isnull=False  # Vérifie que la transaction de paiement existe
+            )
+            
+            if not invalid_match:
+                winning_team = 'red' if match.winner == match.red_id else 'blue'
+                bets_query = bets_query.filter(team=winning_team)
+                
+            # Log des paris trouvés
+            bets = list(bets_query)
+            logger.info(f"Found {len(bets)} bets for this user/match")
+            for bet in bets:
+                logger.info(f"Bet details: team={bet.team}, payout={bet.payout}, tx_out={bet.tx_out}")
+                
+            total_payout = bets_query.aggregate(Sum('payout'))['payout__sum'] or 0
+            tx_out = bets_query.values_list('tx_out', flat=True).first()
+            
             response_data = {
                 'totalPayout': float(total_payout),
                 'tx_out': tx_out,
-                'invalidMatch': invalid_match
+                'invalidMatch': invalid_match,
+                'status': 'completed'
             }
+            
+            logger.info(f"Returning response: {response_data}")
             return Response(response_data)
-        except User.DoesNotExist:
-            logger.error(f"User not found: wallet={wallet}")
-            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-        except Match.DoesNotExist:
-            logger.error(f"Match not found: m_id={m_id}")
-            return Response({'error': 'Match not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+        except Exception as e:
+            logger.error(f"Error in actual_wins_data: {str(e)}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
     @action(detail=False, methods=['put'])
     def user_payout(self, request):

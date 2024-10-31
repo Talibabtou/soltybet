@@ -95,8 +95,8 @@ async def handle_bets_open(context: MatchContext):
 	context.bets_df = None
 	context.invalid_match = False
 
-	set_gate_state("open", context.config)
 	context.block_ids[0] = get_current_block_id()
+	set_gate_state("open", context.config)
 	logger.debug("Current block ID at bets open: %d", context.block_ids[0])
 	result = subprocess.run(['node', '/javascript/buttonSimulation.js', '/app/keypair.json'], capture_output=True, text=True)
 	logger.debug("Simulation result: %s", result.stdout)
@@ -113,8 +113,8 @@ async def handle_bets_locked(context: MatchContext):
 		context.bets_df = None
 		return
 
-	print(f"Red volume: {context.bets_df[context.bets_df['team'] == 'red']['amount_bet'].sum()}")
-	print(f"Blue volume: {context.bets_df[context.bets_df['team'] == 'blue']['amount_bet'].sum()}")
+	print(f"Red volume: {context.bets_df[context.bets_df['team'] == 'red']['initial_amount_bet'].sum()}")
+	print(f"Blue volume: {context.bets_df[context.bets_df['team'] == 'blue']['initial_amount_bet'].sum()}")
 
 	context.bets_df, context.invalid_match = compute_bets(context.bets_df)
 	if context.invalid_match:

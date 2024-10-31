@@ -59,17 +59,32 @@ def handle_bets_open(red_fighter, blue_fighter, headers):
 		return None, None, None
 
 def handle_bets_locked(headers, match):
-	try:
-		m_id = match["m_id"]
-		response = requests.get(f'http://backend:8000/api/bets/bets_volume/?m_id={m_id}', headers=headers)
-		response.raise_for_status()
-		data = response.json()
-		total_red = data['total_red']
-		total_blue = data['total_blue']
-		return total_red, total_blue
-	except requests.exceptions.RequestException as e:
-		print(f"Error fetching bets volume: {e}")
-		return None, None
+    try:
+        m_id = match["m_id"]
+        max_retries = 3
+        retry_delay = 2  # secondes
+        
+        for attempt in range(max_retries):
+            print(f"Tentative {attempt + 1} de récupération des volumes pour match {m_id}")
+            
+            response = requests.get(f'http://backend:8000/api/bets/bets_volume/?m_id={m_id}', headers=headers)
+            response.raise_for_status()
+            data = response.json()
+            
+            # Si on a des paris
+            if data['debug_info']['total_bets'] > 0:
+                print(f"Volumes trouvés: Red={data['total_red']}, Blue={data['total_blue']}")
+                return data['total_red'], data['total_blue']
+                
+            print(f"Aucun pari trouvé, attente de {retry_delay} secondes...")
+            time.sleep(retry_delay)
+            
+        print(f"Échec après {max_retries} tentatives")
+        return 0, 0  # Retourner 0,0 au lieu de None,None pour éviter les erreurs
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching bets volume: {e}")
+        return 0, 0  # Pareil ici
 
 def handle_wins(phase, fighter_red, fighter_blue, current_time, match, headers):
 	duration = datetime.now() - current_time

@@ -485,33 +485,33 @@ class BetViewSet(BaseViewSet, mixins.UpdateModelMixin):
                 Tx_in: {bet.tx_in}
                 """)
 
-            # Calculons les totaux
-            total_red = Bet.objects.filter(m_id__m_id=m_id, team='red').aggregate(
-                total=Sum('volume'),
-                count=Count('id')
-            )
-            total_blue = Bet.objects.filter(m_id__m_id=m_id, team='blue').aggregate(
-                total=Sum('volume'),
-                count=Count('id')
-            )
+            # Calculons les totaux avec une valeur par défaut de 0
+            red_bets = Bet.objects.filter(m_id__m_id=m_id, team='red')
+            blue_bets = Bet.objects.filter(m_id__m_id=m_id, team='blue')
+            
+            total_red_volume = red_bets.aggregate(Sum('volume'))['volume__sum'] or 0
+            total_blue_volume = blue_bets.aggregate(Sum('volume'))['volume__sum'] or 0
+            
+            red_count = red_bets.count()
+            blue_count = blue_bets.count()
 
             print(f"""
             Résumé des volumes:
-            Rouge: {total_red['total'] or 0} ({total_red['count']} paris)
-            Bleu: {total_blue['total'] or 0} ({total_blue['count']} paris)
+            Rouge: {total_red_volume} ({red_count} paris)
+            Bleu: {total_blue_volume} ({blue_count} paris)
             """)
 
             match = get_object_or_404(Match, m_id=m_id)
-            match.vol_red = total_red['total'] or 0
-            match.vol_blue = total_blue['total'] or 0
+            match.vol_red = total_red_volume
+            match.vol_blue = total_blue_volume
             match.save()
 
             return Response({
-                "total_red": float(total_red['total'] or 0),
-                "total_blue": float(total_blue['total'] or 0),
+                "total_red": float(total_red_volume),
+                "total_blue": float(total_blue_volume),
                 "debug_info": {
-                    "red_bets_count": total_red['count'],
-                    "blue_bets_count": total_blue['count'],
+                    "red_bets_count": red_count,
+                    "blue_bets_count": blue_count,
                     "total_bets": all_bets.count()
                 }
             }, status=status.HTTP_200_OK)

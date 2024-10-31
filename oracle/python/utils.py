@@ -114,7 +114,7 @@ def save_match_history(match_df: pd.DataFrame, invalid_match: bool, file_path: s
 
 		match_df = match_df[['bet_id', 'user_address', 'amount_bet', 'initial_amount_bet', 'team', 
 							 'contribution_rate', 'payout', 'valid_hash', 'referrer_address', 'referrer_royalty', 'house_fee', 'invalid_match']]
-		
+
 		logger.debug("Current bets_df state:\n%s", match_df)
 
 		mode = 'a' if file_exists else 'w'
@@ -136,6 +136,9 @@ def save_last_match(match_df: pd.DataFrame, invalid_match: bool, file_path: str 
 		for col in ['contribution_rate', 'house_fee']:
 			if col not in match_df.columns:
 				match_df[col] = 0
+		print("Volumes being saved to last_match.json:")
+		print(f"Red volume: {match_df[match_df['team'] == 'red']['amount_bet'].sum()}")
+		print(f"Blue volume: {match_df[match_df['team'] == 'blue']['amount_bet'].sum()}")
 
 		float_columns = ['payout', 'referrer_royalty', 'house_fee']
 		match_df[float_columns] = match_df[float_columns].round(5)

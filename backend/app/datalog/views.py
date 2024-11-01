@@ -466,58 +466,68 @@ class BetViewSet(BaseViewSet, mixins.UpdateModelMixin):
     def bets_volume(self, request):
         if request.user.username.strip() != 'scrap':
             raise PermissionDenied("API permission denied")
+        
         m_id = request.query_params.get('m_id')
         if not m_id:
             return Response({'error': 'm_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
         try:
-            # Vérifions d'abord tous les paris pour ce match
-            all_bets = Bet.objects.filter(m_id__m_id=m_id)
-            print(f"\nDébug des paris pour le match {m_id}:")
-            print(f"Nombre total de paris: {all_bets.count()}")
-            
-            # Affichons les détails de chaque pari
-            for bet in all_bets:
-                print(f"""
-                Pari ID: {bet.b_id}
-                Équipe: {bet.team}
-                Volume: {bet.volume}
-                Success_in: {bet.success_in}
-                Tx_in: {bet.tx_in}
-                """)
+            # Requête SQL directe pour calculer les volumes
+            from django.db import connection
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT 
+                        team,
+                        SUM(volume) as total_volume,
+                        COUNT(*) as bet_count
+                    FROM datalog_bet
+                    WHERE m_id_id = %s
+                    AND success_in = true
+                    GROUP BY team
+                """, [m_id])
+                results = cursor.fetchall()
 
-            # Calculons les totaux avec une valeur par défaut de 0
-            red_bets = Bet.objects.filter(m_id__m_id=m_id, team='red')
-            blue_bets = Bet.objects.filter(m_id__m_id=m_id, team='blue')
-            
-            total_red_volume = red_bets.aggregate(Sum('volume'))['volume__sum'] or 0
-            total_blue_volume = blue_bets.aggregate(Sum('volume'))['volume__sum'] or 0
-            
-            red_count = red_bets.count()
-            blue_count = blue_bets.count()
+            # Initialiser les volumes à 0
+            total_red = 0
+            total_blue = 0
+            red_count = 0
+            blue_count = 0
+
+            # Traiter les résultats
+            for team, volume, count in results:
+                if team == 'red':
+                    total_red = float(volume or 0)
+                    red_count = count
+                elif team == 'blue':
+                    total_blue = float(volume or 0)
+                    blue_count = count
 
             print(f"""
-            Résumé des volumes:
-            Rouge: {total_red_volume} ({red_count} paris)
-            Bleu: {total_blue_volume} ({blue_count} paris)
+            Volumes calculés pour le match {m_id}:
+            Rouge: {total_red} ({red_count} paris)
+            Bleu: {total_blue} ({blue_count} paris)
             """)
 
+            # Mise à jour du match
             match = get_object_or_404(Match, m_id=m_id)
-            match.vol_red = total_red_volume
-            match.vol_blue = total_blue_volume
+            match.vol_red = total_red
+            match.vol_blue = total_blue
             match.save()
 
             return Response({
-                "total_red": float(total_red_volume),
-                "total_blue": float(total_blue_volume),
+                "total_red": total_red,
+                "total_blue": total_blue,
                 "debug_info": {
                     "red_bets_count": red_count,
                     "blue_bets_count": blue_count,
-                    "total_bets": all_bets.count()
+                    "total_bets": red_count + blue_count
                 }
             }, status=status.HTTP_200_OK)
+            
         except Exception as e:
             print(f"Erreur lors du calcul des volumes: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
 
     @action(detail=False, methods=['put'])
     def bet_payout(self, request):

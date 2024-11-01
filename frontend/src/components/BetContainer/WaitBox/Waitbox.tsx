@@ -48,7 +48,7 @@ const Waitbox: React.FC = () => {
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             fetchExpectedWinsData();
-        }, 5000);
+        }, 2000);
         return () => clearTimeout(timeoutId);
     }, [fetchExpectedWinsData]);
     useEffect(() => {

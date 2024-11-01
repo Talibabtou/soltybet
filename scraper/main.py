@@ -15,7 +15,6 @@ CHANNEL_NAME = 'saltybet'
 user = 'scrap'
 secret_file = 'scraper_pass'
 
-
 async def twitch_chat_listener():
 	token_data, token_expiry, headers = initialize_token(user, secret_file)
 	current_time = None
@@ -69,7 +68,6 @@ async def twitch_chat_listener():
 										elif "Bets are locked" in msg and sync_time:
 											phase["text"] = "Bets are locked"
 											current_time = datetime.now()
-											time.sleep(0.5)
 											total_blue, total_red = handle_bets_locked(headers, match)
 											if total_red == 0 and total_blue > 0 or total_red > 0 and total_blue == 0:
 												executor.submit(handle_payout, headers, match, "Refund")
@@ -93,7 +91,7 @@ async def twitch_chat_listener():
 						except Exception as e:
 							print(f"Error processing message: {e}")
 							await send_to_discord(f"Error in twitch_chat_listener: {e}")
-							
+
 		except websockets.exceptions.WebSocketException as e:
 			print(f"WebSocket error: {e}. Reconnecting in 5 seconds...")
 			await send_to_discord(f"WebSocket error: {e}. Reconnecting in 5 seconds...")
@@ -103,7 +101,6 @@ async def twitch_chat_listener():
 			await send_to_discord(f"Unexpected error: {e}. Reconnecting in 10 seconds...")
 			await send_to_discord(f"Unexpected error in twitch_chat_listener: {e}")
 			await asyncio.sleep(10)
-
 
 async def main():
 	retry_delay = 20

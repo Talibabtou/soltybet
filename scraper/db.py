@@ -59,32 +59,25 @@ def handle_bets_open(red_fighter, blue_fighter, headers):
 		return None, None, None
 
 def handle_bets_locked(headers, match):
-    try:
-        m_id = match["m_id"]
-        max_retries = 3
-        retry_delay = 2  # secondes
-        
-        for attempt in range(max_retries):
-            print(f"Tentative {attempt + 1} de récupération des volumes pour match {m_id}")
-            
-            response = requests.get(f'http://backend:8000/api/bets/bets_volume/?m_id={m_id}', headers=headers)
-            response.raise_for_status()
-            data = response.json()
-            
-            # Si on a des paris
-            if data['debug_info']['total_bets'] > 0:
-                print(f"Volumes trouvés: Red={data['total_red']}, Blue={data['total_blue']}")
-                return data['total_red'], data['total_blue']
-                
-            print(f"Aucun pari trouvé, attente de {retry_delay} secondes...")
-            time.sleep(retry_delay)
-            
-        print(f"Échec après {max_retries} tentatives")
-        return 0, 0  # Retourner 0,0 au lieu de None,None pour éviter les erreurs
-        
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching bets volume: {e}")
-        return 0, 0  # Pareil ici
+	try:
+		m_id = match["m_id"]
+		max_retries = 3
+		retry_delay = 0.5
+		for attempt in range(max_retries):
+			print(f"Attempt {attempt + 1} to retrieve volumes for match {m_id}")
+			response = requests.get(f'http://backend:8000/api/bets/bets_volume/?m_id={m_id}', headers=headers)
+			response.raise_for_status()
+			data = response.json()
+			if data['debug_info']['total_bets'] > 0:
+				print(f"Volumes found: Red={data['total_red']}, Blue={data['total_blue']}")
+				return data['total_red'], data['total_blue']
+			print(f"No bets found, waiting for {retry_delay} seconds...")
+			time.sleep(retry_delay)
+		print(f"Failed after {max_retries} attempts")
+		return 0, 0
+	except requests.exceptions.RequestException as e:
+		print(f"Error fetching bets volume: {e}")
+		return 0, 0
 
 def handle_wins(phase, fighter_red, fighter_blue, current_time, match, headers):
 	duration = datetime.now() - current_time
@@ -109,8 +102,7 @@ def handle_wins(phase, fighter_red, fighter_blue, current_time, match, headers):
 def handle_payout(headers, match, info):
 	file_path = '/app/history/last_match.json'
 	start_time = time.time()
-	timeout = 30
-
+	timeout = 10
 	while True:
 		if time.time() - start_time > timeout:
 			print("scraper: Payout request timed out after 30 seconds")
@@ -119,7 +111,6 @@ def handle_payout(headers, match, info):
 			if not os.path.exists(file_path) or os.path.getsize(file_path) == 0:
 				time.sleep(0.5)
 				continue
-			time.sleep(1)
 			with open(file_path, 'r') as file:
 				data = json.load(file)
 			if not data or not isinstance(data, list):
@@ -180,7 +171,6 @@ def handle_match_history(file_path, headers):
 									json=history, headers=headers)
 			response.raise_for_status()
 			print("Bet payout processed successfully")
-
 			response = requests.put('http://backend:8000/api/users/user_totals/',
 									headers=headers)
 			response.raise_for_status()

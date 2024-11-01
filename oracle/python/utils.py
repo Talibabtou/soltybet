@@ -121,14 +121,15 @@ def save_match_history(match_df: pd.DataFrame, invalid_match: bool, file_path: s
 		match_df.to_csv(file_path, mode=mode, header=not file_exists, index=False)
 		logger.debug("Match history saved to %s", file_path)
 
-def save_last_match(match_df: pd.DataFrame, invalid_match: bool, file_path: str = '/app/history/last_match.json'):
+def save_last_match(match_df: pd.DataFrame, invalid_match: bool, file_path: str = '/app/history/last_match_temp.json'):
 	"""Save the last match results to a JSON file, including validity status."""
+	final_file_path = '/app/history/last_match.json'
 	if match_df.empty:
 		logger.debug("No last match data to save.")
 		with open(file_path, 'w') as json_file:
 			json.dump([], json_file)
+		os.rename(file_path, final_file_path)
 		return
-	
 	if not match_df.empty and match_df.notna().any().any():
 		for col in ['referrer_address', 'referrer_royalty', 'valid_hash']:
 			if col not in match_df.columns:
@@ -136,20 +137,13 @@ def save_last_match(match_df: pd.DataFrame, invalid_match: bool, file_path: str 
 		for col in ['contribution_rate', 'house_fee']:
 			if col not in match_df.columns:
 				match_df[col] = 0
-		print("Volumes being saved to last_match.json:")
-		print(f"Red volume: {match_df[match_df['team'] == 'red']['amount_bet'].sum()}")
-		print(f"Blue volume: {match_df[match_df['team'] == 'blue']['amount_bet'].sum()}")
-
 		float_columns = ['payout', 'referrer_royalty', 'house_fee']
 		match_df[float_columns] = match_df[float_columns].round(5)
-
 		last_match_data = match_df[['bet_id', 'user_address', 'payout', 'valid_hash','referrer_address', 'referrer_royalty']].copy()
 		last_match_data['invalid_match'] = invalid_match
-
 		match_data = last_match_data.to_dict(orient='records')
-
 		match_data = [{k: (v if pd.notna(v) else None) for k, v in record.items()} for record in match_data]
-
 		with open(file_path, 'w') as json_file:
 			json.dump(match_data, json_file)
-		logger.debug("Last match results saved to %s", file_path)
+		os.rename(file_path, final_file_path)
+		logger.debug("Last match results saved to %s", final_file_path)

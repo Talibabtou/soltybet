@@ -29,7 +29,6 @@ def update_with_valid_hash(bets_df, json_output):
 	except (ValueError, json.JSONDecodeError) as e:
 		print("Error parsing JSON output:", e)
 		return
-
 	for index, row in bets_df.iterrows():
 		user_address = row['user_address']
 		payout = row['payout']
@@ -37,26 +36,20 @@ def update_with_valid_hash(bets_df, json_output):
 			bets_df.at[index, 'valid_hash'] = transaction_results[user_address]
 		else:
 			bets_df.at[index, 'valid_hash'] = None
-
 	print("Transaction results updated in bets_df.")
 
 def process_payouts(bets_df, config):
 	"""Process payouts by calling the JavaScript function to send transactions."""
-
 	if bets_df.empty:
 		logger.debug("No bets to process for payouts.")
 		return
-
 	json_data = parse_payouts(bets_df, config)
 	if not json_data:
 		logger.error("Error: JSON data is empty or malformed.")
 		return
-
 	result = subprocess.run(['node', 'javascript/bulkSend.js', json_data, config['oracle_wallet']], capture_output=True, text=True)
 	json_output = result.stdout.strip()
-
 	if not json_output:
 		logger.error("Error: No output from JavaScript execution.")
 		return
-
 	update_with_valid_hash(bets_df, json_output)

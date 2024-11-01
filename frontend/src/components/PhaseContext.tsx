@@ -63,17 +63,16 @@ export const PhaseProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     const handleMessage = (dataFromServer: WebSocketMessage) => {
-      console.log('WebSocket message received in PhaseContext:', dataFromServer);
       
       if (dataFromServer.type === "info") {
         if (dataFromServer.text === "Payout") {
-          console.log('Payout message received, scheduling fetch in 1 seconds');
+          
           
           setTimeout(() => {
-            console.log('Setting shouldFetchData to true and payoutId:', dataFromServer.m_id);
+            
             setShouldFetchData(true);
             setPayoutId(dataFromServer.m_id || null);
-            console.log("set shouldFetchData to true and payoutId:", shouldFetchData, payoutId);
+            
           }, 1000);
         } else if (dataFromServer.text === "Refund") {
           

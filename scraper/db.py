@@ -59,25 +59,28 @@ def handle_bets_open(red_fighter, blue_fighter, headers):
 		return None, None, None
 
 def handle_bets_locked(headers, match):
-	try:
-		m_id = match["m_id"]
-		max_retries = 3
-		retry_delay = 0.5
-		for attempt in range(max_retries):
-			print(f"Attempt {attempt + 1} to retrieve volumes for match {m_id}")
-			response = requests.get(f'http://backend:8000/api/bets/bets_volume/?m_id={m_id}', headers=headers)
-			response.raise_for_status()
-			data = response.json()
-			if data['debug_info']['total_bets'] > 0:
-				print(f"Volumes found: Red={data['total_red']}, Blue={data['total_blue']}")
-				return data['total_red'], data['total_blue']
-			print(f"No bets found, waiting for {retry_delay} seconds...")
-			time.sleep(retry_delay)
-		print(f"Failed after {max_retries} attempts")
-		return 0, 0
-	except requests.exceptions.RequestException as e:
-		print(f"Error fetching bets volume: {e}")
-		return 0, 0
+    try:
+        m_id = match["m_id"]
+        print(f"Retrieving volumes for match {m_id}")
+        time.sleep(1)  # Cette ligne avait une mauvaise indentation
+        response = requests.get(f'http://backend:8000/api/bets/bets_volume/?m_id={m_id}', headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        
+        total_red = data['total_red']
+        total_blue = data['total_blue']
+        total_bets = data['debug_info']['total_bets']
+        
+        print(f"Match {m_id} stats:")
+        print(f"- Total bets: {total_bets}")
+        print(f"- Red volume: {total_red}")
+        print(f"- Blue volume: {total_blue}")
+        
+        return total_red, total_blue
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching bets volume: {e}")
+        return 0, 0
 
 def handle_wins(phase, fighter_red, fighter_blue, current_time, match, headers):
 	duration = datetime.now() - current_time
@@ -100,48 +103,79 @@ def handle_wins(phase, fighter_red, fighter_blue, current_time, match, headers):
 		send_to_discord(f"db: Unexpected error: {e}")
 
 def handle_payout(headers, match, info):
-	file_path = '/app/history/last_match.json'
-	start_time = time.time()
-	timeout = 10
-	while True:
-		if time.time() - start_time > timeout:
-			print("scraper: Payout request timed out after 30 seconds")
-			return
-		try:
-			if not os.path.exists(file_path) or os.path.getsize(file_path) == 0:
-				time.sleep(0.5)
-				continue
-			with open(file_path, 'r') as file:
-				data = json.load(file)
-			if not data or not isinstance(data, list):
-				time.sleep(0.5)
-				continue
-			bet_response = requests.put(
-				'http://backend:8000/api/bets/bet_payout/',
-				json=data, 
-				headers=headers, 
-				timeout=10)
-			bet_response.raise_for_status()
-			time.sleep(0.5)
-			user_response = requests.put(
-				'http://backend:8000/api/users/user_payout/',
-				json=data, 
-				headers=headers, 
-				timeout=10)
-			user_response.raise_for_status()
-			print(json.dumps(data, indent=2))
-			asyncio.run(send_info(info, match["m_id"], headers))
-			clear_file(file_path)
-			return
-		except (FileNotFoundError, json.JSONDecodeError):
-			time.sleep(0.5)
-			continue
-		except requests.RequestException as e:
-			send_to_discord(f"scraper: API Error during payout: {str(e)}")
-			return
-		except Exception as e:
-			send_to_discord(f"scraper: Unexpected error during payout: {str(e)}")
-			return
+    file_path = '/app/history/last_match.json'
+    start_time = time.time()
+    timeout = 30
+    while True:
+        if time.time() - start_time > timeout:
+            print("scraper: Payout request timed out after 30 seconds")
+            return
+        try:
+            if not os.path.exists(file_path) or os.path.getsize(file_path) == 0:
+                time.sleep(0.5)
+                continue
+            with open(file_path, 'r') as file:
+                data = json.load(file)
+            
+            # Ajout de logs pour déboguer
+            print("Loaded data from file:", json.dumps(data, indent=2))
+            
+            if not data or not isinstance(data, list):
+                time.sleep(0.5)
+                continue
+
+            # Vérification de la structure des données
+            for item in data:
+                required_fields = ['user_address', 'payout', 'bet_id']
+                missing_fields = [field for field in required_fields if field not in item]
+                if missing_fields:
+                    raise ValueError(f"Missing required fields: {missing_fields} in item: {item}")
+                
+                # S'assurer que payout est une chaîne de caractères
+                if 'payout' in item:
+                    item['payout'] = str(item['payout'])  # Convertir en string au lieu de float
+                if 'referrer_royalty' in item:
+                    item['referrer_royalty'] = str(item['referrer_royalty'])  # Aussi pour referrer_royalty
+
+            bet_response = requests.put(
+                'http://backend:8000/api/bets/bet_payout/',
+                json=data, 
+                headers=headers, 
+                timeout=10
+            )
+            bet_response.raise_for_status()
+            
+            # Ajout d'un délai entre les requêtes
+            time.sleep(0.5)
+            
+            print("Sending user payout data:", json.dumps(data, indent=2))
+            user_response = requests.put(
+                'http://backend:8000/api/users/user_payout/',
+                json=data, 
+                headers=headers, 
+                timeout=10
+            )
+            
+            # Log de la réponse en cas d'erreur
+            if user_response.status_code != 200:
+                print("User payout error response:", user_response.text)
+            
+            user_response.raise_for_status()
+            print("Payout successful")
+            
+            asyncio.run(send_info(info, match["m_id"], headers))
+            clear_file(file_path)
+            return
+            
+        except ValueError as e:
+            send_to_discord(f"scraper: Data validation error: {str(e)}")
+            return
+        except requests.RequestException as e:
+            send_to_discord(f"scraper: API Error during payout: {str(e)}\nResponse: {e.response.text if hasattr(e, 'response') else 'No response text'}")
+            return
+        except Exception as e:
+            send_to_discord(f"scraper: Unexpected error during payout: {str(e)}")
+            return
 
 def process_match_history(file_path):
 	processed_data = []

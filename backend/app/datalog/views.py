@@ -202,26 +202,33 @@ class UserViewSet(BaseViewSet, mixins.UpdateModelMixin):
             
             logger.info(f"Processing payout for match {m_id} and wallet {wallet}")
             
+            # Vérifier si le match est invalide
             invalid_match = Bet.objects.filter(m_id=match, invalid_match=True).exists()
+            logger.info(f"Match invalid status: {invalid_match}")
             
-            # Utiliser tx_out au lieu de success_out
+            # Base query pour les paris de l'utilisateur
             bets_query = Bet.objects.filter(
                 m_id=match,
                 u_id=user,
                 payout__isnull=False,
-                tx_out__isnull=False  # Vérifie que la transaction de paiement existe
+                tx_out__isnull=False
             )
             
             if not invalid_match:
+                # Pour un match valide, ne prendre que les paris gagnants
                 winning_team = 'red' if match.winner == match.red_id else 'blue'
+                logger.info(f"Valid match, winning team: {winning_team}")
                 bets_query = bets_query.filter(team=winning_team)
-                
+            else:
+                # Pour un match invalide, prendre tous les paris (refund)
+                logger.info("Invalid match, processing all bets for refund")
+            
             # Log des paris trouvés
             bets = list(bets_query)
-            logger.info(f"Found {len(bets)} bets for this user/match")
+            logger.info(f"Found {len(bets)} bets to process")
             for bet in bets:
-                logger.info(f"Bet details: team={bet.team}, payout={bet.payout}, tx_out={bet.tx_out}")
-                
+                logger.info(f"Bet details: team={bet.team}, volume={bet.volume}, payout={bet.payout}, tx_out={bet.tx_out}")
+            
             total_payout = bets_query.aggregate(Sum('payout'))['payout__sum'] or 0
             tx_out = bets_query.values_list('tx_out', flat=True).first()
             
@@ -229,7 +236,12 @@ class UserViewSet(BaseViewSet, mixins.UpdateModelMixin):
                 'totalPayout': float(total_payout),
                 'tx_out': tx_out,
                 'invalidMatch': invalid_match,
-                'status': 'completed'
+                'status': 'completed',
+                'debug_info': {
+                    'match_id': m_id,
+                    'winner': str(match.winner) if not invalid_match else 'invalid match',
+                    'total_bets': len(bets)
+                }
             }
             
             logger.info(f"Returning response: {response_data}")
@@ -248,23 +260,46 @@ class UserViewSet(BaseViewSet, mixins.UpdateModelMixin):
         try:
             with transaction.atomic():
                 for user_data in data:
-                    user = get_object_or_404(User, wallet=user_data['user_address'])
-                    payout = Decimal(str(user_data['payout']))
-                    if user_data.get('invalid_match', True):
-                        user.total_payout += payout
-                    else:
-                        volume = get_object_or_404(Bet, b_id=user_data['bet_id']).volume
-                        user.total_payout += payout
-                        user.total_gain += payout
-                        user.total_volume += volume
-                        user.nb_bet += 1
-                    user.save()
-                    if user_data['referrer_address']:
-                        referrer = get_object_or_404(User, u_id=user.ref_id.u_id)
-                        referrer.referral_gain += Decimal(str(user_data['referrer_royalty']))
-                        referrer.save()
-            return Response({"message": "Bet payouts processed successfully"}, status=status.HTTP_200_OK)
+                    try:
+                        # Récupération de l'utilisateur
+                        user = get_object_or_404(User, wallet=user_data['user_address'])
+                        bet = get_object_or_404(Bet, b_id=user_data['bet_id'])
+                        
+                        # Conversion sécurisée des valeurs numériques
+                        try:
+                            payout = Decimal(str(user_data.get('payout', '0')))
+                            referrer_royalty = Decimal(str(user_data.get('referrer_royalty', '0')))
+                        except (TypeError, ValueError) as e:
+                            print(f"Erreur de conversion: payout={user_data.get('payout')}, royalty={user_data.get('referrer_royalty')}")
+                            continue
+
+                        # Mise à jour des totaux de l'utilisateur
+                        if bet.invalid_match:
+                            # Pour les matchs invalides, on ajoute juste le payout
+                            user.total_payout += payout
+                        else:
+                            # Pour les matchs valides, on met à jour tous les compteurs
+                            user.total_payout += payout
+                            user.total_gain += payout - bet.volume
+                            user.total_volume += bet.volume
+                            user.nb_bet += 1
+                        
+                        user.save()
+
+                        # Mise à jour du referrer si nécessaire
+                        if user_data.get('referrer_address') and user.ref_id and referrer_royalty > 0:
+                            referrer = get_object_or_404(User, u_id=user.ref_id.u_id)
+                            referrer.referral_gain += referrer_royalty
+                            referrer.save()
+
+                    except Exception as e:
+                        print(f"Erreur pour l'utilisateur {user_data.get('user_address')}: {str(e)}")
+                        continue
+
+                return Response({"message": "Bet payouts processed successfully"}, status=status.HTTP_200_OK)
+                
         except Exception as e:
+            print(f"Erreur globale dans user_payout: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=False, methods=['get'])
@@ -432,14 +467,27 @@ class BetViewSet(BaseViewSet, mixins.UpdateModelMixin):
         b_id = request.data.get('b_id')
         tx_in = request.data.get('tx_in')
         volume = request.data.get('volume')
+        
         try:
             bet = Bet.objects.get(b_id=b_id)
+            match = bet.m_id  # Récupère le match associé au pari
+            
+            # Met à jour le pari
             bet.tx_in = tx_in
             bet.success_in = True
             bet.volume = Decimal(str(volume))
             bet.save()
+            
+            # Met à jour le volume total du match en fonction de la couleur
+            if bet.team == 'red':
+                match.vol_red += bet.volume
+            else:  # bet.team == 'blue'
+                match.vol_blue += bet.volume
+            match.save()
+            
             serializer = self.get_serializer(bet)
             return Response(serializer.data, status=status.HTTP_200_OK)
+            
         except Bet.DoesNotExist:
             return Response({'error': 'Bet not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
@@ -450,13 +498,21 @@ class BetViewSet(BaseViewSet, mixins.UpdateModelMixin):
         if request.user.username.strip() != 'front':
             raise PermissionDenied("API permission denied")
         b_id = request.query_params.get('b_id')
+        
         try:
             bet = Bet.objects.get(b_id=b_id)
-            if not bet.success_in:
-                bet.delete()
-                return Response({'message': 'Pari annulé avec succès'}, status=status.HTTP_200_OK)
-            else:
-                return Response({'error': 'Impossible d\'annuler un pari confirmé'}, status=status.HTTP_400_BAD_REQUEST)
+            if bet.success_in:
+                # Si le pari était confirmé, on soustrait le volume du match
+                match = bet.m_id
+                if bet.team == 'red':
+                    match.vol_red -= bet.volume
+                else:  # bet.team == 'blue'
+                    match.vol_blue -= bet.volume
+                match.save()
+                
+            bet.delete()
+            return Response({'message': 'Pari annulé avec succès'}, status=status.HTTP_200_OK)
+            
         except Bet.DoesNotExist:
             return Response({'error': 'Pari non trouvé'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
@@ -472,62 +528,37 @@ class BetViewSet(BaseViewSet, mixins.UpdateModelMixin):
             return Response({'error': 'm_id is required'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            # Requête SQL directe pour calculer les volumes
-            from django.db import connection
-            with connection.cursor() as cursor:
-                cursor.execute("""
-                    SELECT 
-                        team,
-                        SUM(volume) as total_volume,
-                        COUNT(*) as bet_count
-                    FROM datalog_bet
-                    WHERE m_id_id = %s
-                    AND success_in = true
-                    GROUP BY team
-                """, [m_id])
-                results = cursor.fetchall()
-
-            # Initialiser les volumes à 0
-            total_red = 0
-            total_blue = 0
-            red_count = 0
-            blue_count = 0
-
-            # Traiter les résultats
-            for team, volume, count in results:
-                if team == 'red':
-                    total_red = float(volume or 0)
-                    red_count = count
-                elif team == 'blue':
-                    total_blue = float(volume or 0)
-                    blue_count = count
-
-            print(f"""
-            Volumes calculés pour le match {m_id}:
-            Rouge: {total_red} ({red_count} paris)
-            Bleu: {total_blue} ({blue_count} paris)
-            """)
-
-            # Mise à jour du match
             match = get_object_or_404(Match, m_id=m_id)
-            match.vol_red = total_red
-            match.vol_blue = total_blue
-            match.save()
+            
+            # Compter le nombre de paris pour chaque équipe
+            red_count = Bet.objects.filter(m_id=match, team='red', success_in=True).count()
+            blue_count = Bet.objects.filter(m_id=match, team='blue', success_in=True).count()
+
+            # Vérifier si le match doit être invalidé
+            if (match.vol_red == 0 and match.vol_blue > 0) or (match.vol_red > 0 and match.vol_blue == 0):
+                print(f"Match {m_id} invalidé : red={match.vol_red}, blue={match.vol_blue}")
+                # Marquer tous les paris du match comme invalides
+                Bet.objects.filter(m_id=match).update(invalid_match=True)
+            else:
+                # Si le match est valide (les deux équipes ont des paris)
+                print(f"Match {m_id} valide : red={match.vol_red}, blue={match.vol_blue}")
+                # Marquer tous les paris du match comme valides
+                Bet.objects.filter(m_id=match).update(invalid_match=False)
 
             return Response({
-                "total_red": total_red,
-                "total_blue": total_blue,
+                "total_red": float(match.vol_red),
+                "total_blue": float(match.vol_blue),
                 "debug_info": {
                     "red_bets_count": red_count,
                     "blue_bets_count": blue_count,
-                    "total_bets": red_count + blue_count
+                    "total_bets": red_count + blue_count,
+                    "is_invalid": Bet.objects.filter(m_id=match, invalid_match=True).exists()
                 }
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
-            print(f"Erreur lors du calcul des volumes: {str(e)}")
+            print(f"Erreur lors de la récupération des volumes: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-                
 
     @action(detail=False, methods=['put'])
     def bet_payout(self, request):

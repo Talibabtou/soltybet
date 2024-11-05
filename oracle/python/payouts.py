@@ -36,7 +36,6 @@ def update_with_valid_hash(bets_df, json_output):
 			bets_df.at[index, 'valid_hash'] = transaction_results[user_address]
 		else:
 			bets_df.at[index, 'valid_hash'] = None
-	print("Transaction results updated in bets_df.")
 
 def process_payouts(bets_df, config):
 	"""Process payouts by calling the JavaScript function to send transactions."""

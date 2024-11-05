@@ -36,25 +36,37 @@ const Sidebar: React.FC = () => {
         tokenManager.getData<DataItem[]>('/users/top_gain/')
       ]);
       
-      const volumeMap = new Map(volumeData.map(item => [item.wallet, item.volume || 0]));
-      const gainMap = new Map(gainData.map(item => [item.wallet, item.gain || 0]));
+      // Pour le tableau Volume
+      const topVolume = volumeData
+        .filter(item => (item.volume || 0) > 0)
+        .map(item => ({
+          wallet: item.wallet,
+          volume: item.volume || 0
+        }))
+        .sort((a, b) => b.volume - a.volume)
+        .slice(0, 10);
       
-      const allWallets = new Set([...volumeMap.keys(), ...gainMap.keys()]);
+      // Pour le tableau PnL
+      const pnlData = gainData
+        .map(item => {
+          const volumeItem = volumeData.find(v => v.wallet === item.wallet);
+          return {
+            wallet: item.wallet,
+            volume: volumeItem?.volume || 0,
+            gain: item.gain || 0,
+            pnl: (item.gain || 0) - (volumeItem?.volume || 0)
+          };
+        })
+        .filter(item => item.pnl !== 0)
+        .sort((a, b) => b.pnl - a.pnl)
+        .slice(0, 10);
       
-      const pnlData = Array.from(allWallets).map(wallet => {
-        const volume = volumeMap.get(wallet) || 0;
-        const gain = gainMap.get(wallet) || 0;
-        const pnl = gain - volume;
-        return { wallet, volume, gain, pnl };
+      setData({
+        volume: topVolume,
+        gain: pnlData
       });
-      
-      pnlData.sort((a, b) => b.pnl - a.pnl);
-      
-      
-      
-      setData({ volume: volumeData, gain: pnlData });
     } catch (error) {
-      console.error("Error while fetching top data:");
+      console.error("Error while fetching top data:", error);
     }
   }, []);
 

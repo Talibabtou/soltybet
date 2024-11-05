@@ -150,16 +150,24 @@ class UserViewSet(BaseViewSet, mixins.UpdateModelMixin):
     def top_volume(self, request):
         if request.user.username.strip() != 'front':
             raise PermissionDenied("API permission denied")
-        top_users = User.objects.order_by('-total_volume')[:10]
-        data = [{'wallet': user.wallet, 'volume': float(user.total_volume)} for user in top_users]
+        users = User.objects.filter(total_volume__gt=0).order_by('-total_volume')
+        data = [{
+            'wallet': user.wallet, 
+            'volume': float(user.total_volume),
+            'gain': float(user.total_gain)
+        } for user in users]
         return Response(data)
 
     @action(detail=False, methods=['get'])
     def top_gain(self, request):
         if request.user.username.strip() != 'front':
             raise PermissionDenied("API permission denied")
-        top_users = User.objects.order_by('-total_payout')[:10]
-        data = [{'wallet': user.wallet, 'gain': float(user.total_gain)} for user in top_users]
+        users = User.objects.filter(total_gain__gt=0).order_by('-total_gain')
+        data = [{
+            'wallet': user.wallet, 
+            'volume': float(user.total_volume),
+            'gain': float(user.total_gain)
+        } for user in users]
         return Response(data)
 
     @action(detail=True, methods=['get'])

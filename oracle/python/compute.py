@@ -25,9 +25,7 @@ def compute_bets(bets_df: pd.DataFrame):
 		return bets_df, True
 	bets_df = bets_df.apply(apply_ref_royalties, axis=1)
 	team_totals = bets_df.groupby('team')['amount_bet'].sum()
-	logger.debug("Team totals:\n%s", team_totals)
 	bets_df['contribution_rate'] = bets_df['amount_bet'] / bets_df['team'].map(team_totals)
-	logger.debug("Bettor contribution rates calculated.")
 	return bets_df, False
 
 def compute_payouts(bets_df, winning_team, is_invalid):
@@ -48,6 +46,5 @@ def compute_payouts(bets_df, winning_team, is_invalid):
 	else:
 		bets_df['house_fee'] = 0.0
 	current_house_fee = bets_df['house_fee'].sum()
-	logger.debug("Final payouts after subtracting house fees calculated.")
 	logger.info("Total house fee collected during the match: %s", current_house_fee)
 	return bets_df

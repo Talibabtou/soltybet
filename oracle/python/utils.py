@@ -31,7 +31,7 @@ def load_bets(open_timestamp: int, close_timestamp: int) -> pd.DataFrame:
 			text=True
 		)
 		output = result.stdout.strip()
-		logger.debug("fetch.js output: %s", output)
+		logger.info("fetch.js output: %s", output)
 		if not output:
 			logger.error("No output from fetch.js")
 			return None
@@ -43,7 +43,6 @@ def load_bets(open_timestamp: int, close_timestamp: int) -> pd.DataFrame:
 			return None
 
 		bets_df = pd.DataFrame(bets, columns=['bet_id', 'user_address', 'initial_amount_bet', 'team', 'referrer_address'])
-		logger.debug("Loaded bets data from blockchain.")
 		return bets_df
 	except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
 		logger.error("Failed to fetch bets: %s", e)
@@ -115,11 +114,11 @@ def save_match_history(match_df: pd.DataFrame, invalid_match: bool, file_path: s
 		match_df = match_df[['bet_id', 'user_address', 'amount_bet', 'initial_amount_bet', 'team', 
 							 'contribution_rate', 'payout', 'valid_hash', 'referrer_address', 'referrer_royalty', 'house_fee', 'invalid_match']]
 
-		logger.debug("Current bets_df state:\n%s", match_df)
+		logger.info("Current bets_df state:\n%s", match_df)
 
 		mode = 'a' if file_exists else 'w'
 		match_df.to_csv(file_path, mode=mode, header=not file_exists, index=False)
-		logger.debug("Match history saved to %s", file_path)
+		logger.info("Match history saved to %s", file_path)
 
 def save_last_match(match_df: pd.DataFrame, invalid_match: bool, file_path: str = '/app/history/last_match_temp.json'):
 	"""Save the last match results to a JSON file, including validity status."""
@@ -146,4 +145,4 @@ def save_last_match(match_df: pd.DataFrame, invalid_match: bool, file_path: str 
 		with open(file_path, 'w') as json_file:
 			json.dump(match_data, json_file)
 		os.rename(file_path, final_file_path)
-		logger.debug("Last match results saved to %s", final_file_path)
+		logger.info("Last match results saved to %s", final_file_path)

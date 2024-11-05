@@ -93,22 +93,15 @@ async def handle_bets_open(context: MatchContext):
 	context.invalid_match = False
 	context.block_ids[0] = get_current_block_id()
 	set_gate_state("open", context.config)
-	logger.debug("Current block ID at bets open: %d", context.block_ids[0])
-	result = subprocess.run(['node', '/javascript/buttonSimulation.js', '/app/keypair.json'], capture_output=True, text=True)
-	logger.debug("Simulation result: %s", result.stdout)
 
 async def handle_bets_locked(context: MatchContext):
 	"""Handle the bets locked phase."""
 	set_gate_state("close", context.config)
 	context.block_ids[1] = get_current_block_id()
-	logger.info("Fetching bets between blocks %d and %d", context.block_ids[0], context.block_ids[1])
 	context.bets_df = load_bets(context.block_ids[0], context.block_ids[1])
 	if context.bets_df is None or context.bets_df.empty:
-		logger.debug("No bets to process.")
 		context.bets_df = None
 		return
-	print(f"Red volume: {context.bets_df[context.bets_df['team'] == 'red']['initial_amount_bet'].sum()}")
-	print(f"Blue volume: {context.bets_df[context.bets_df['team'] == 'blue']['initial_amount_bet'].sum()}")
 	context.bets_df, context.invalid_match = compute_bets(context.bets_df)
 	if context.invalid_match:
 		await handle_invalid_match(context)
@@ -116,7 +109,6 @@ async def handle_bets_locked(context: MatchContext):
 async def handle_match_over(phase_text: str, context: MatchContext):
 	"""Handle the match over phase."""
 	winning_team = determine_winning_team(phase_text)
-	logger.info("handle match: %s", context.bets_df)
 	if context.bets_df is None or context.bets_df.empty:
 		return
 	if is_invalid_match(context.bets_df, phase_text, context.current_phase):
@@ -130,7 +122,7 @@ async def handle_match_over(phase_text: str, context: MatchContext):
 
 async def handle_invalid_match(context: MatchContext):
 	"""Handle the invalid match phase."""
-	logger.debug("Handling invalid match, refunding bets.")
+	logger.info("Handling invalid match, refunding bets.")
 	if context.bets_df is None:
 		logger.debug("No bets to process for invalid match.")
 		return

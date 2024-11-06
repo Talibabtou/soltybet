@@ -150,11 +150,11 @@ class UserViewSet(BaseViewSet, mixins.UpdateModelMixin):
     def top_volume(self, request):
         if request.user.username.strip() != 'front':
             raise PermissionDenied("API permission denied")
-        users = User.objects.filter(total_volume__gt=0).order_by('-total_volume')
+        
+        users = User.objects.filter(total_volume__gt=0).order_by('-total_volume')[:10]
         data = [{
             'wallet': user.wallet, 
-            'volume': float(user.total_volume),
-            'gain': float(user.total_gain)
+            'volume': float(user.total_volume)
         } for user in users]
         return Response(data)
 
@@ -162,12 +162,17 @@ class UserViewSet(BaseViewSet, mixins.UpdateModelMixin):
     def top_gain(self, request):
         if request.user.username.strip() != 'front':
             raise PermissionDenied("API permission denied")
-        users = User.objects.filter(total_gain__gt=0).order_by('-total_gain')
+        
+        users = User.objects.all()
         data = [{
-            'wallet': user.wallet, 
+            'wallet': user.wallet,
             'volume': float(user.total_volume),
-            'gain': float(user.total_gain)
+            'gain': float(user.total_gain),
+            'pnl': float(user.total_gain - user.total_volume)
         } for user in users]
+        
+        # Filtrer et trier par PnL
+        data = sorted(data, key=lambda x: x['pnl'], reverse=True)[:10]
         return Response(data)
 
     @action(detail=True, methods=['get'])
@@ -176,25 +181,42 @@ class UserViewSet(BaseViewSet, mixins.UpdateModelMixin):
             raise PermissionDenied("API permission denied")
         user = self.get_object()
         
+        # Calcul du volume total (paris valides uniquement)
+        total_volume = Bet.objects.filter(
+            u_id=user,
+            invalid_match=False,
+            success_in=True
+        ).aggregate(Sum('volume'))['volume__sum'] or 0
+
+        # Calcul des gains (payouts des matchs valides)
+        total_gain = Bet.objects.filter(
+            u_id=user,
+            invalid_match=False,  # Seulement les matchs valides
+            success_out=True      # Paiements réussis
+        ).aggregate(Sum('payout'))['payout__sum'] or 0
+
+        # Calcul du total des payouts (gains + remboursements)
+        total_payout = Bet.objects.filter(
+            u_id=user,
+            success_out=True  # Tous les payouts réussis
+        ).aggregate(Sum('payout'))['payout__sum'] or 0
+
+        # Nombre de paris et paris gagnants
         valid_bets = Bet.objects.filter(
             u_id=user,
-            success_in=True,
-            invalid_match=False
+            invalid_match=False,
+            success_in=True
         )
         
-        winning_bets = valid_bets.filter(payout__gt=0).count()
         total_bets = valid_bets.count()
-        
-        total_volume = valid_bets.aggregate(Sum('volume'))['volume__sum'] or 0
-        total_payout = valid_bets.filter(success_out=True).aggregate(Sum('payout'))['payout__sum'] or 0
+        winning_bets = valid_bets.filter(payout__gt=0).count()
         
         win_percentage = (winning_bets / total_bets * 100) if total_bets > 0 else 0
         
         stats = {
             'volume': float(total_volume),
             'total_volume': float(user.total_volume),
-            'gain': float(total_payout),
-            'pnl': float(total_payout - total_volume),
+            'gain': float(total_gain),
             'nbBets': total_bets,
             'winningBets': winning_bets,
             'winPercentage': round(win_percentage, 2),
@@ -272,40 +294,50 @@ class UserViewSet(BaseViewSet, mixins.UpdateModelMixin):
         data = request.data
         try:
             with transaction.atomic():
-                for user_data in data:
-                    try:
-                        user = get_object_or_404(User, wallet=user_data['user_address'])
-                        bet = get_object_or_404(Bet, b_id=user_data['bet_id'])
-                        
-                        try:
-                            payout = Decimal(str(user_data.get('payout', '0')))
-                            referrer_royalty = Decimal(str(user_data.get('referrer_royalty', '0')))
-                        except (TypeError, ValueError) as e:
-                            print(f"Erreur de conversion: payout={user_data.get('payout')}, royalty={user_data.get('referrer_royalty')}")
-                            continue
+                # Grouper les données par utilisateur pour traiter tous les paris d'un coup
+                user_bets = {}
+                for bet_data in data:
+                    user_address = bet_data['user_address']
+                    if user_address not in user_bets:
+                        user_bets[user_address] = []
+                    user_bets[user_address].append(bet_data)
 
-                        if bet.invalid_match:
-                            user.total_payout += payout
-                        else:
-                            user.total_payout += payout
-                            user.total_gain += payout - bet.volume
-                            user.total_volume += bet.volume
+                for user_address, bets in user_bets.items():
+                    try:
+                        user = get_object_or_404(User, wallet=user_address)
                         
+                        # Calculer le volume total des paris valides
+                        total_volume = Decimal('0')
+                        total_gain = Decimal('0')
+                        total_payout = Decimal('0')
+
+                        for bet_data in bets:
+                            bet = get_object_or_404(Bet, b_id=bet_data['bet_id'])
+                            payout = Decimal(str(bet_data.get('payout', '0')))
+                            
+                            if not bet.invalid_match:
+                                total_volume += bet.volume
+                                total_gain += payout
+                            total_payout += payout
+
+                        print(f"User {user_address}:")
+                        print(f"- Adding volume: {total_volume}")
+                        print(f"- Adding gain: {total_gain}")
+                        print(f"- Adding payout: {total_payout}")
+
+                        user.total_volume += total_volume
+                        user.total_gain += total_gain
+                        user.total_payout += total_payout
                         user.save()
 
-                        if user_data.get('referrer_address') and user.ref_id and referrer_royalty > 0:
-                            referrer = get_object_or_404(User, u_id=user.ref_id.u_id)
-                            referrer.referral_gain += referrer_royalty
-                            referrer.save()
-
                     except Exception as e:
-                        print(f"Erreur pour l'utilisateur {user_data.get('user_address')}: {str(e)}")
+                        print(f"Error processing user {user_address}: {str(e)}")
                         continue
 
-                return Response({"message": "Bet payouts processed successfully"}, status=status.HTTP_200_OK)
-                
+                return Response({"message": "User payouts processed successfully"}, status=status.HTTP_200_OK)
+                    
         except Exception as e:
-            print(f"Erreur globale dans user_payout: {str(e)}")
+            print(f"Global error in user_payout: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     
@@ -353,9 +385,15 @@ class UserViewSet(BaseViewSet, mixins.UpdateModelMixin):
                         success_in=True
                     ).values('m_id').distinct().count()
 
+                    total_gain = Bet.objects.filter(
+                    u_id=user,
+                    invalid_match=False,  # Seulement les matchs valides
+                    success_out=True      # Paiements réussis
+                    ).aggregate(Sum('payout'))['payout__sum'] or 0
+
                     user.total_volume = total_volume
                     user.total_payout = total_payout
-                    user.total_gain = total_payout
+                    user.total_gain = total_gain
                     user.nb_bet = nb_bet
                     user.save()
 

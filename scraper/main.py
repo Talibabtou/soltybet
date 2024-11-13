@@ -34,7 +34,7 @@ async def update_volumes(phase, match, headers, fighter_red, fighter_blue):
             total_red = data['total_red']
             
             print(f"[DEBUG] Volumes: Blue={total_blue}, Red={total_red}")
-            await send_phase(phase, fighter_red, fighter_blue, total_blue, total_red, match, headers)
+            await send_phase(phase, fighter_red, fighter_blue, total_red, total_blue, match, headers)
             await asyncio.sleep(2)
         except Exception as e:
             print(f"Error in update_volumes: {e}")
@@ -126,7 +126,7 @@ async def twitch_chat_listener():
                                                     total_blue = data['total_blue']
                                                     total_red = data['total_red']
                                                     print(f"[DEBUG] Current volumes: Blue={total_blue}, Red={total_red}")
-                                                    await send_phase(phase, fighter_red, fighter_blue, total_blue, total_red, match, headers)
+                                                    await send_phase(phase, fighter_red, fighter_blue, total_red, total_blue, match, headers)
                                                     
                                                     # Si c'est le dernier tour de boucle, utiliser handle_bets_locked
                                                     if (datetime.now() - lock_time).total_seconds() > 9:  # 9 secondes pour être sûr
@@ -141,7 +141,7 @@ async def twitch_chat_listener():
                                             phase["text"] = truncated_msg
                                             if fighter_red and fighter_blue and current_time and match:
                                                 handle_wins(phase, fighter_red, fighter_blue, current_time, match, headers)
-                                            await send_phase(phase, fighter_red, fighter_blue, total_blue, total_red, match, headers)
+                                            await send_phase(phase, fighter_red, fighter_blue, total_red, total_blue, match, headers)
                                             executor.submit(handle_payout, headers, match, "Payout")
 
                         except asyncio.TimeoutError:

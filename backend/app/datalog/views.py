@@ -617,6 +617,43 @@ class BetViewSet(BaseViewSet, mixins.UpdateModelMixin):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @action(detail=False, methods=['get'])
+    def get_volumes(self, request):
+        if request.user.username.strip() != 'scrap':
+            raise PermissionDenied("API permission denied")
+        
+        m_id = request.query_params.get('m_id')
+        if not m_id:
+            return Response({'error': 'm_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            match = Match.objects.get(m_id=m_id)
+            volumes = Bet.objects.filter(
+                m_id=match,
+                success_in=True
+            ).values('team').annotate(
+                total_volume=Sum('volume')
+            )
+            
+            total_red = 0
+            total_blue = 0
+            
+            for volume in volumes:
+                if volume['team'] == 'red':
+                    total_red = volume['total_volume'] or 0
+                elif volume['team'] == 'blue':
+                    total_blue = volume['total_volume'] or 0
+
+            return Response({
+                "total_red": float(total_red),
+                "total_blue": float(total_blue),
+                "debug_info": {
+                    "total_bets": Bet.objects.filter(m_id=match, success_in=True).count()
+                }
+            })
+            
+        except Match.DoesNotExist:
+            return Response({'error': 'Match not found'}, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=False, methods=['put'])
     def bet_payout(self, request):

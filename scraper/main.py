@@ -21,7 +21,7 @@ async def update_volumes(phase, match, headers, fighter_red, fighter_blue):
     while phase["text"] == "Bets are OPEN!":
         try:
             print(f"[DEBUG] Updating volumes for match {match['m_id']}")
-            await asyncio.sleep(2)
+            await asyncio.sleep(1)
             
             response = requests.get(
                 f'http://backend:8000/api/bets/get_volumes/?m_id={match["m_id"]}', 
@@ -35,7 +35,7 @@ async def update_volumes(phase, match, headers, fighter_red, fighter_blue):
             
             print(f"[DEBUG] Volumes: Blue={total_blue}, Red={total_red}")
             await send_phase(phase, fighter_red, fighter_blue, total_red, total_blue, match, headers)
-            await asyncio.sleep(2)
+            await asyncio.sleep(1)
         except Exception as e:
             print(f"Error in update_volumes: {e}")
             await send_to_discord(f"Error in update_volumes: {e}")

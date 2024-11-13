@@ -41,13 +41,13 @@ interface OddProps {
   matchData: MatchData | null;
   phase: string | null;
   showOdds: boolean;
+  userHasBet: boolean;
 }
 
-const Odd: React.FC<OddProps> = ({ matchData, phase, showOdds }) => {
+const Odd: React.FC<OddProps> = ({ matchData, phase, showOdds, userHasBet }) => {
   const [storedLandscapes, setStoredLandscapes] = useState<string[]>([]);
   const [cancelMessage, setCancelMessage] = useState<string>('');
   const [hasRefreshedUser, setHasRefreshedUser] = useState(false);
-  const { userHasBet } = useUserBet();
   const { refreshUser } = useContext(UserContext);
 
   useEffect(() => {
@@ -68,7 +68,7 @@ const Odd: React.FC<OddProps> = ({ matchData, phase, showOdds }) => {
         setStoredLandscapes(landscapes);
       }
     };
-		loadLandscapes();
+    loadLandscapes();
     
     if (userHasBet) {
       setCancelMessage(cancelMessages[Math.floor(Math.random() * cancelMessages.length)]);
@@ -95,7 +95,7 @@ const Odd: React.FC<OddProps> = ({ matchData, phase, showOdds }) => {
 
     const redOdd = totalVolume / volumeRed;
     const blueOdd = totalVolume / volumeBlue;
-    const minOdd = Math.min(redOdd, blueOdd); 
+    const minOdd = Math.min(redOdd, blueOdd);
 
     return {
       redOdd: parseFloat((redOdd / minOdd).toFixed(2)),
@@ -103,44 +103,49 @@ const Odd: React.FC<OddProps> = ({ matchData, phase, showOdds }) => {
     };
   }, []);
 
-  if (phase !== 'wait' || !matchData) {
-    console.error('Returning empty container.');
+  if (!matchData) {
     return <div className="odd"></div>;
   }
 
   const volumeRed = parseFloat(matchData.total_red);
   const volumeBlue = parseFloat(matchData.total_blue);
+  const betsAreValid = (volumeRed > 0 && volumeBlue > 0)
+  const showCancelMessage = !betsAreValid && userHasBet && (phase === 'wait');
 
-  const betsAreValid = volumeRed > 0 && volumeBlue > 0;
-
-  if (!betsAreValid) {
+  // Si les paris ne sont pas valides, afficher le message d'annulation ou le paysage
+  if (!betsAreValid && phase === 'wait') {
     return (
       <div className="odd cancelled-container">
         <img src={randomLandscape} alt="Cancelled" className="cancelled-gif" />
         <div className="cancelled-overlay">
-					{userHasBet && <span className="bet-canceled">{cancelMessage}</span>}
+          {showCancelMessage && <span className="bet-canceled">{cancelMessage}</span>}
         </div>
       </div>
     );
   }
 
+  // Calculer les odds seulement si les deux volumes sont > 0
   const { redOdd, blueOdd } = calculateOdds(volumeRed, volumeBlue);
 
-  return (
-    <div className="odd">
-      {showOdds ? (
-        <div className={`odd-container fade-in ${showOdds ? 'visible' : ''}`}>
-          <div className="odd-values">
-            <span className="red-odd">{redOdd.toFixed(1)}</span>
-            <span className="separator">:</span>
-            <span className="blue-odd">{blueOdd.toFixed(1)}</span>
+  if (phase === 'bet' || phase === 'wait') {
+    return (
+      <div className="odd">
+        {showOdds ? (
+          <div className={`odd-container fade-in ${showOdds ? 'visible' : ''}`}>
+            <div className="odd-values">
+              <span className="red-odd">{redOdd.toFixed(1)}</span>
+              <span className="separator">:</span>
+              <span className="blue-odd">{blueOdd.toFixed(1)}</span>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="loading-odds">Loading...</div>
-      )}
-    </div>
-  );
+        ) : (
+          <div className="loading-odds">Loading...</div>
+        )}
+      </div>
+    );
+  }
+
+  return <div className="odd"></div>;
 };
 
 export default React.memo(Odd);

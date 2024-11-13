@@ -79,7 +79,6 @@ const Orderbook: React.FC = () => {
   const { userHasBet, resetUserHasBet } = useUserBet();
   const [storedGifs, setStoredGifs] = useState<string[]>([]);
   const [currentGif, setCurrentGif] = useState<string>('');
-  const [showDonut, setShowDonut] = useState(false);
 
   useEffect(() => {
     const loadGifs = async () => {
@@ -121,16 +120,7 @@ const Orderbook: React.FC = () => {
     }
   }, [phase, selectRandomGif]);
 
-  useEffect(() => {
-    if (phase === 'wait') {
-      setShowDonut(false);
-      const timer = setTimeout(() => {
-        setShowDonut(true);
-      }, 5000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [phase]);
+  
 
   const matchData: MatchData | null = latestMatch ? {
     m_id: latestMatch.m_id,
@@ -140,11 +130,50 @@ const Orderbook: React.FC = () => {
     blueFighter: latestMatch.blueFighter
   } : null;
 
-  const betsAreValid = matchData && parseFloat(matchData.total_red) > 0 && parseFloat(matchData.total_blue) > 0;
+  console.log('[DEBUG] Phase:', phase);
+  console.log('[DEBUG] MatchData:', matchData);
 
-  const data = matchData && phase === 'wait' && betsAreValid ? {
-    labels: ['Blue', 'Red'],
-    datasets: [
+  const betsAreValid = matchData && 
+                     !isNaN(parseFloat(matchData.total_red)) && 
+                     !isNaN(parseFloat(matchData.total_blue)) && 
+                     (parseFloat(matchData.total_red) > 0 && parseFloat(matchData.total_blue) > 0);
+
+  console.log('[DEBUG] betsAreValid:', betsAreValid);
+// Pour le donut, on veut l'afficher dès qu'un côté a un pari
+  const showDonutCondition = matchData && 
+    phase !== 'reward' && 
+    (
+      // En phase 'bet': afficher dès qu'un côté a du volume
+      (phase === 'bet' && 
+        (parseFloat(matchData.total_red) > 0 || parseFloat(matchData.total_blue) > 0)
+      ) ||
+      // En phase 'wait': afficher uniquement si les deux côtés ont du volume
+      (phase === 'wait' && betsAreValid)
+    );
+                          
+console.log('[DEBUG] showDonutCondition:', showDonutCondition);
+
+const showGif = 
+  phase === 'reward' || 
+  (!matchData && phase !== 'wait') || 
+  (phase === 'bet' && matchData && 
+   (!matchData.total_red || parseFloat(matchData.total_red) === 0) && 
+   (!matchData.total_blue || parseFloat(matchData.total_blue) === 0));
+
+console.log('[DEBUG] showGif:', showGif, {
+  phase,
+  total_red: matchData?.total_red,
+  total_blue: matchData?.total_blue,
+  parsed_red: matchData ? parseFloat(matchData.total_red) : null,
+  parsed_blue: matchData ? parseFloat(matchData.total_blue) : null
+});
+
+const showContent = !showGif && phase !== 'reward';
+console.log('[DEBUG] showContent:', showContent);
+
+const data = matchData && showDonutCondition ? {
+  labels: ['Blue', 'Red'],
+  datasets: [
       {
         label: 'Volume',
         data: [parseFloat(matchData.total_blue), parseFloat(matchData.total_red)],
@@ -180,11 +209,10 @@ const Orderbook: React.FC = () => {
     cutout: '70%',
   };
 
-  const showGif = phase !== 'wait';
+ 
 
   useEffect(() => {
     if (phase === 'bet') {
-      
       resetUserHasBet();
     }
   }, [phase, resetUserHasBet]);
@@ -192,20 +220,21 @@ const Orderbook: React.FC = () => {
   return (
     <div className={`orderbook ${showGif ? 'show-gif' : ''}`}>
       <div className="orderbook-inner-container">
-        {!showGif ? (
+        {showContent ? (
           <>
             <div className="orderbook-left">
-              <Odd matchData={matchData} phase={phase} showOdds={showDonut} userHasBet={userHasBet} />
+              <Odd 
+                matchData={matchData} 
+                phase={phase} 
+                showOdds={betsAreValid}
+                userHasBet={userHasBet} 
+              />
             </div>
-            {betsAreValid ? (
-              <div className={`orderbook-right ${showDonut ? 'fade-in visible' : 'fade-in'}`}>
-                {showDonut ? (
-                  <Doughnut data={data} options={options} />
-                ) : (
-                  <div className="loading-donut">Loading Odds...</div>
-                )}
+            {showDonutCondition && (
+              <div className="orderbook-right fade-in visible">
+                <Doughnut data={data} options={options} />
               </div>
-            ) : null}
+            )}
           </>
         ) : (
           <div className="waiting-gif-container">

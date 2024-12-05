@@ -292,9 +292,10 @@ class UserViewSet(BaseViewSet, mixins.UpdateModelMixin):
         if request.user.username.strip() != 'scrap':
             raise PermissionDenied("API permission denied")
         data = request.data
+        
         try:
             with transaction.atomic():
-                # Grouper les données par utilisateur pour traiter tous les paris d'un coup
+                # Grouper les paris par utilisateur
                 user_bets = {}
                 for bet_data in data:
                     user_address = bet_data['user_address']
@@ -304,37 +305,60 @@ class UserViewSet(BaseViewSet, mixins.UpdateModelMixin):
 
                 for user_address, bets in user_bets.items():
                     try:
-                        user = get_object_or_404(User, wallet=user_address)
+                        user = User.objects.select_for_update().get(wallet=user_address)
                         
-                        # Calculer le volume total des paris valides
                         total_volume = Decimal('0')
                         total_gain = Decimal('0')
                         total_payout = Decimal('0')
 
                         for bet_data in bets:
-                            bet = get_object_or_404(Bet, b_id=bet_data['bet_id'])
-                            payout = Decimal(str(bet_data.get('payout', '0')))
+                            bet = Bet.objects.select_for_update().get(b_id=bet_data['bet_id'])
+                            payout = Decimal(str(bet_data['payout']))
                             
-                            if not bet.invalid_match:
+                            # Traiter les gains de parrainage
+                            if bet_data.get('referrer_address'):
+                                try:
+                                    referrer = User.objects.select_for_update().get(
+                                        wallet=bet_data['referrer_address']
+                                    )
+                                    royalty = Decimal(str(bet_data['referrer_royalty']))
+                                    referrer.referral_gain += royalty
+                                    referrer.save()
+                                    
+                                    print(f"Referral gain processed for {bet_data['referrer_address']}: +{royalty} SOL")
+                                except User.DoesNotExist:
+                                    print(f"Referrer not found: {bet_data['referrer_address']}")
+                                    continue
+
+                            if not bet_data['invalid_match']:
                                 total_volume += bet.volume
                                 total_gain += payout
                             total_payout += payout
 
-                        print(f"User {user_address}:")
-                        print(f"- Adding volume: {total_volume}")
-                        print(f"- Adding gain: {total_gain}")
-                        print(f"- Adding payout: {total_payout}")
+                        print(f"Processing user {user_address}:")
+                        print(f"- Volume: +{total_volume} SOL")
+                        print(f"- Gain: +{total_gain} SOL")
+                        print(f"- Payout: +{total_payout} SOL")
 
+                        # Mise à jour des totaux de l'utilisateur
                         user.total_volume += total_volume
                         user.total_gain += total_gain
                         user.total_payout += total_payout
                         user.save()
 
+                    except User.DoesNotExist:
+                        print(f"User not found: {user_address}")
+                        continue
+                    except Bet.DoesNotExist:
+                        print(f"Bet not found in bet_data: {bet_data}")
+                        continue
                     except Exception as e:
                         print(f"Error processing user {user_address}: {str(e)}")
                         continue
 
-                return Response({"message": "User payouts processed successfully"}, status=status.HTTP_200_OK)
+                return Response({
+                    "message": "User payouts processed successfully"
+                }, status=status.HTTP_200_OK)
                     
         except Exception as e:
             print(f"Global error in user_payout: {str(e)}")

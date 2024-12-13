@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("8SR9grijMpc1kujQ8ATJHXbbkrfBgSSoGoep1LaHmv2E");
+declare_id!("5awMTFDmJv3EXEPstpJKD6fJ6FrLfcBw5Ek5CeutvKcM");
 
 #[program]
 pub mod deposit_gate {

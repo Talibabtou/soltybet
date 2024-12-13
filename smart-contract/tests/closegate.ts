@@ -1,51 +1,57 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { PublicKey, Connection, Keypair } from '@solana/web3.js';
-import { DepositGate } from '../target/types/deposit_gate';
+import { PublicKey, Connection, Keypair, ComputeBudgetProgram } from '@solana/web3.js';
 import * as fs from 'fs';
 
 async function closeGate() {
-    // Load the keypair from the specified file
-    const keypairFile = fs.readFileSync('<KEYPAIR_FILE_PATH>', 'utf-8');
-    const keypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(keypairFile)));
+	const keypairFile = fs.readFileSync('/home/talibabtou/.config/solana/deposit-gate.json', 'utf-8');
+	const keypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(keypairFile)));
+	const connection = new Connection("https://mainnet.helius-rpc.com/?api-key=7f7759aa-4312-455a-90da-f6f921256fe1");
 
-    const connection = new Connection("https://api.devnet.solana.com", "confirmed");
-    const wallet = new anchor.Wallet(keypair);
-    const provider = new anchor.AnchorProvider(connection, wallet, {});
-    anchor.setProvider(provider);
+	// Get recent priority fee levels
+	const recentPriorityFees = await connection.getRecentPrioritizationFees();
+	
+	// Calculate median priority fee from recent transactions (last 5 seconds)
+	const medianPriorityFee = recentPriorityFees.reduce((a, b) => a + b.prioritizationFee, 0) / recentPriorityFees.length;
+	
+	// Add 20% to ensure we're above median
+	const priorityFee = Math.ceil(medianPriorityFee * 1.2);
+	
+	console.log(`Using priority fee of ${priorityFee} microLamports`);
 
-    // Get the initial balance
-    const initialBalance = await connection.getBalance(keypair.publicKey);
+	const wallet = new anchor.Wallet(keypair);
+	const provider = new anchor.AnchorProvider(connection, wallet, {
+		commitment: 'confirmed',
+		preflightCommitment: 'confirmed',
+	});
 
-    const program = anchor.workspace.DepositGate as Program<DepositGate>;
+	const programId = new PublicKey("5awMTFDmJv3EXEPstpJKD6fJ6FrLfcBw5Ek5CeutvKcM");
+	const [gatePDA] = PublicKey.findProgramAddressSync(
+		[Buffer.from("deposit_gate")],
+		programId
+	);
 
-    // Derive the PDA for the gate account
-    const [gatePDA] = PublicKey.findProgramAddressSync(
-        [Buffer.from("deposit_gate")],
-        program.programId
-    );
+	try {
+		const program = await Program.at(programId, provider);
+		
+		// Create priority fee instruction
+		const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
+			microLamports: priorityFee
+		});
 
-    try {
-        // Set the gate to closed
-        const tx = await program.methods
-            .setGate(false)
-            .accounts({
-                gate: gatePDA,
-                oracle: provider.wallet.publicKey,
-            })
-            .rpc();
+		const tx = await program.methods
+			.setGate(false)
+			.accounts({
+				gate: gatePDA,
+				oracle: provider.wallet.publicKey,
+			})
+			.preInstructions([priorityFeeIx])  // Add priority fee instruction
+			.rpc();
 
-        console.log("Gate closed successfully. Transaction signature:", tx);
-    } catch (error) {
-        console.error("Failed to close gate:", error);
-    }
-
-    // After closing the gate, get the final balance
-    const finalBalance = await connection.getBalance(keypair.publicKey);
-    const lamportsUsed = initialBalance - finalBalance;
-    const solUsed = lamportsUsed / 1e9;
-
-    console.log(`SOL used: ${solUsed.toFixed(9)}`);
+		console.log("Gate closed successfully. Transaction signature:", tx);
+	} catch (error) {
+		console.error("Failed to close gate:", error);
+	}
 }
 
-closeGate();
+closeGate().catch(console.error);

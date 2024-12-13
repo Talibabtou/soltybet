@@ -1,4 +1,4 @@
-import { PublicKey, Connection, Keypair, TransactionInstruction, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
+import { PublicKey, Connection, Keypair, TransactionInstruction, Transaction, sendAndConfirmTransaction, ComputeBudgetProgram } from '@solana/web3.js';
 import * as fs from 'fs';
 import process from 'process';
 import crypto from 'crypto';
@@ -11,11 +11,25 @@ const getInstructionIdentifier = (instructionName) => {
 	return hash.slice(0, 8);
 };
 
+async function calculatePriorityFee(connection) {
+	const recentPriorityFees = await connection.getRecentPrioritizationFees();
+	const medianPriorityFee = recentPriorityFees.reduce((a, b) => a + b.prioritizationFee, 0) / recentPriorityFees.length;
+	const priorityFee = Math.ceil(medianPriorityFee * 1.2);
+	console.log(`Using priority fee of ${priorityFee} microLamports`);
+	return priorityFee;
+}
+
 async function setGateState(open) {
 	const keypairFile = fs.readFileSync(config.oracle_wallet, 'utf-8');
 	const keypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(keypairFile)));
 
 	const connection = new Connection(config.rpc_url, "confirmed");
+
+	const priorityFee = await calculatePriorityFee(connection);
+
+	const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
+		microLamports: priorityFee
+	});
 
 	const programId = new PublicKey(config.deposit_gate_address);
 	const [gatePDA] = PublicKey.findProgramAddressSync(
@@ -38,7 +52,9 @@ async function setGateState(open) {
 			data: instructionData,
 		});
 
-		const transaction = new Transaction().add(instruction);
+		const transaction = new Transaction()
+			.add(priorityFeeIx)
+			.add(instruction);
 		const signature = await sendAndConfirmTransaction(connection, transaction, [keypair]);
 
 		console.log(`Gate ${open ? "opened" : "closed"} successfully. Transaction signature:`, signature);

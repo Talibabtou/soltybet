@@ -1,12 +1,24 @@
-import { PublicKey, Transaction, SystemProgram, Connection, sendAndConfirmTransaction, Keypair } from '@solana/web3.js';
+import { PublicKey, Transaction, SystemProgram, Connection, sendAndConfirmTransaction, Keypair, ComputeBudgetProgram } from '@solana/web3.js';
 import fs from 'fs';
 import process from 'process';
 import { loadConfig } from './config.js';
 
 const config = loadConfig();
 
-export function generateTransactions(batchSize, dropList, fromWallet) {
+async function calculatePriorityFee(connection) {
+	const recentPriorityFees = await connection.getRecentPrioritizationFees();
+	const medianPriorityFee = recentPriorityFees.reduce((a, b) => a + b.prioritizationFee, 0) / recentPriorityFees.length;
+	const priorityFee = Math.ceil(medianPriorityFee * 1.2);
+	console.log(`Using priority fee of ${priorityFee} microLamports`);
+	return priorityFee;
+}
+
+export function generateTransactions(batchSize, dropList, fromWallet, priorityFee) {
 	let result = [];
+
+	const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
+		microLamports: priorityFee
+	});
 
 	let txInstructions = dropList.map(drop => {
 		const numLamports = drop.numSOL;
@@ -25,6 +37,7 @@ export function generateTransactions(batchSize, dropList, fromWallet) {
 	const numTransactions = Math.ceil(txInstructions.length / batchSize);
 	for (let i = 0; i < numTransactions; i++) {
 		let bulkTransaction = new Transaction();
+		bulkTransaction.add(priorityFeeIx);
 		let lowerIndex = i * batchSize;
 		let upperIndex = (i + 1) * batchSize;
 		for (let j = lowerIndex; j < upperIndex; j++) {
@@ -72,7 +85,10 @@ export async function main(jsonData, keypairPath) {
 		const dropList = JSON.parse(jsonData);
 		const fromWallet = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(fs.readFileSync(keypairPath, 'utf8'))));
 		const connection = new Connection(config.rpc_url, 'confirmed');
-		const transactions = generateTransactions(10, dropList, fromWallet);
+		
+		const priorityFee = await calculatePriorityFee(connection);
+		
+		const transactions = generateTransactions(10, dropList, fromWallet, priorityFee);
 		const signers = [fromWallet];
 
 		const transactionResults = await sendTransactions(connection, transactions, signers);

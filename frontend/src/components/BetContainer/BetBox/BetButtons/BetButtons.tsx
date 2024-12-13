@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { PhaseContext } from '../../../PhaseContext';
 import { useTransaction } from '../../../TxContext';
-import { Connection, PublicKey, Transaction, SystemProgram, TransactionInstruction, clusterApiUrl } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction, SystemProgram, TransactionInstruction, clusterApiUrl, ComputeBudgetProgram } from '@solana/web3.js';
 import { useBet } from '../../../BetProvider';
 import { UserContext } from '../../../../App';
 import { tokenManager, Bet } from '../../../../api';
@@ -14,6 +14,12 @@ import axios from 'axios';
 import { useUserBet } from '../../../UserBetContext';
 
 const MAX_FIGHTER_NAME_LENGTH = 15;
+
+const RPC_URL = import.meta.env.VITE_RPC_URL;
+
+
+//LOG DE TEST A ENLEVER
+console.log('RPC URL:', import.meta.env.VITE_RPC_URL);
 
 function sighash(nameSpace: string, ixName: string): Buffer {
   const name = snakeCase(ixName);
@@ -28,6 +34,38 @@ const formatFighterName = (name: string | null): string => {
         return formattedName;
     }
     return `${formattedName.substring(0, MAX_FIGHTER_NAME_LENGTH)}...`;
+};
+
+const getPriorityFeeEstimate = async (connection: Connection, transaction: Transaction) => {
+  try {
+    const serializedTransaction = transaction.serialize({
+      requireAllSignatures: false
+    }).toString('base64');
+
+    const response = await fetch(RPC_URL!, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'helius-priority-fee',
+        method: 'getPriorityFeeEstimate',
+        params: [{
+          transaction: serializedTransaction,
+          options: {
+            priorityLevel: 'HIGH',
+            includeVote: false,
+            recommended: true
+          }
+        }]
+      })
+    });
+
+    const data = await response.json();
+    return data.result.priorityFeeEstimate;
+  } catch (error) {
+    console.error('Erreur lors de l\'estimation des frais:', error);
+    return 10000;
+  }
 };
 
 const BetButtons = () => {
@@ -92,7 +130,10 @@ const BetButtons = () => {
     }
     let betResponse: Bet | null = null;
     try {
-      const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
+      const connection = new Connection(RPC_URL!, {
+        commitment: 'confirmed',
+        confirmTransactionInitialTimeout: 60000
+      });
       const betAmount = parseFloat(betData.inputValue.replace(',', '.'));
       const amountInLamports = Math.floor(betAmount * 1e9);
       if (isNaN(amountInLamports) || amountInLamports <= 0) {
@@ -136,9 +177,9 @@ const BetButtons = () => {
         programId: memoProgram,
         data: Buffer.from(message, 'utf-8'),
       });
-      const recipientPublicKey = new PublicKey("8F2TcP7cBnHmzZAKqPUjPg5gNbtiFq1QMS6KwszUCTAF");
+      const recipientPublicKey = new PublicKey("CUGCP8gmfmY9wk99JHVyY8HBusub5EhDFxib8G6qxku");
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-      const programId = new PublicKey("8SR9grijMpc1kujQ8ATJHXbbkrfBgSSoGoep1LaHmv2E");
+      const programId = new PublicKey("5awMTFDmJv3EXEPstpJKD6fJ6FrLfcBw5Ek5CeutvKcM");
       const [gatePDA] = PublicKey.findProgramAddressSync(
         [Buffer.from("deposit_gate")],
         programId
@@ -163,6 +204,14 @@ const BetButtons = () => {
           fromPubkey: publicKey,
           toPubkey: recipientPublicKey,
           lamports: amountInLamports,
+        })
+      );
+      
+      // Priority fee
+      const priorityFee = await getPriorityFeeEstimate(connection, transaction);
+      transaction.instructions.unshift(
+        ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports: priorityFee
         })
       );
       const signedTransaction = await signTransaction(transaction);

@@ -22,8 +22,8 @@ const Navbar = () => {
  const menuRef = useRef<HTMLDivElement>(null);
  const tickerRef = useRef<HTMLParagraphElement>(null);
 
- const RPC_URL = import.meta.env.VITE_REACT_APP_RPC_URL;
- const RPC_WSS = RPC_URL.replace('https://', 'wss://');
+ const RPC_URL_WSS = import.meta.env.VITE_RPC_URL;
+ const RPC_WSS = RPC_URL_WSS.replace('https://', 'wss://');
 
  const connection = useRef<Connection | null>(null);
  const subscriptionId = useRef<number | null>(null);

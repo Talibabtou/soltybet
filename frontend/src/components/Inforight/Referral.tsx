@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Connection, PublicKey, Transaction, SystemProgram, clusterApiUrl } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction, SystemProgram, clusterApiUrl, ComputeBudgetProgram } from '@solana/web3.js';
 import { tokenManager } from '../../api';
 import { UserContext } from '../../App';
 import './Referral.css';
+
+const RPC_URL = import.meta.env.VITE_RPC_URL;
+
+//LOG DE TEST A ENLEVER
+console.log('RPC URL:', import.meta.env.VITE_RPC_URL);
 
 const Referral: React.FC = () => {
   const { user, refreshUser } = useContext(UserContext);
@@ -44,6 +49,38 @@ const Referral: React.FC = () => {
     }
   };
 
+  const getPriorityFeeEstimate = async (connection: Connection, transaction: Transaction) => {
+    try {
+      const serializedTransaction = transaction.serialize({
+        requireAllSignatures: false
+      }).toString('base64');
+  
+      const response = await fetch(RPC_URL!, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 'helius-priority-fee',
+          method: 'getPriorityFeeEstimate',
+          params: [{
+            transaction: serializedTransaction,
+            options: {
+              priorityLevel: 'HIGH',
+              includeVote: false,
+              recommended: true
+            }
+          }]
+        })
+      });
+  
+      const data = await response.json();
+      return data.result.priorityFeeEstimate;
+    } catch (error) {
+      console.error('Erreur lors de l\'estimation des frais:', error);
+      return 10000;
+    }
+  };
+
   const handleSubmit = async () => {
     if (!referralName.trim()) {
       setErrorMessage('Please enter a referral code');
@@ -68,7 +105,10 @@ const Referral: React.FC = () => {
         return;
       }
 
-      const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
+      const connection = new Connection(RPC_URL!, {
+        commitment: 'confirmed',
+        confirmTransactionInitialTimeout: 60000
+      });
       const balance = await connection.getBalance(publicKey);
 
       if (balance < amountInLamports) {
@@ -78,8 +118,9 @@ const Referral: React.FC = () => {
         return;
       }
 
-      const recipientPublicKey = new PublicKey("AnCPVACzcYbftbrtxqiuNLV957QHJEF2buSNXkYy3cj3");
+      const recipientPublicKey = new PublicKey("BNqToVas8sJDyHXY7ehyMQNK9pPpdbFq7yrzAj58BEPc");
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+
 
       const transaction = new Transaction({
         feePayer: publicKey,
@@ -92,10 +133,20 @@ const Referral: React.FC = () => {
           lamports: amountInLamports,
         })
       );
-
+  
+      // Ajoutez les priority fees
+      const priorityFee = await getPriorityFeeEstimate(connection, transaction);
+      console.log(`Estimated priority fee: ${priorityFee} microLamports`);
+      
+      transaction.instructions.unshift(
+        ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports: priorityFee
+        })
+      );
+  
       const signedTransaction = await signTransaction(transaction);
       const signature = await connection.sendRawTransaction(signedTransaction.serialize());
-
+  
       const confirmation = await connection.confirmTransaction({
         blockhash: blockhash,
         lastValidBlockHeight: lastValidBlockHeight,

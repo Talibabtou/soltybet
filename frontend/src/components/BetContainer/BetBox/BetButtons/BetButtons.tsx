@@ -15,11 +15,11 @@ import { useUserBet } from '../../../UserBetContext';
 
 const MAX_FIGHTER_NAME_LENGTH = 15;
 
-const RPC_URL = import.meta.env.VITE_RPC_URL;
+const RPC_URL = import.meta.env.VITE_REACT_APP_RPC_URL;
 
 
 //LOG DE TEST A ENLEVER
-console.log('RPC URL:', import.meta.env.VITE_RPC_URL);
+console.log('RPC URL:', import.meta.env.VITE_REACT_APP_RPC_URL);
 
 function sighash(nameSpace: string, ixName: string): Buffer {
   const name = snakeCase(ixName);

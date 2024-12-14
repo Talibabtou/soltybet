@@ -5,10 +5,10 @@ import { tokenManager } from '../../api';
 import { UserContext } from '../../App';
 import './Referral.css';
 
-const RPC_URL = import.meta.env.VITE_RPC_URL;
+const RPC_URL = import.meta.env.VITE_REACT_APP_RPC_URL;
 
 //LOG DE TEST A ENLEVER
-console.log('RPC URL:', import.meta.env.VITE_RPC_URL);
+console.log('RPC URL:', import.meta.env.VITE_REACT_APP_RPC_URL);
 
 const Referral: React.FC = () => {
   const { user, refreshUser } = useContext(UserContext);

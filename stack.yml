@@ -168,7 +168,7 @@ services:
     environment:
       - REACT_APP_API_PASSWORD=${REACT_APP_API_PASSWORD}
       - REACT_APP_RPC_URL=${REACT_APP_RPC_URL}
-      - REACT_APP_RPC_WSS=${REACT_APP_RPC_WSS}
+      - REACT_APP_RPC_URL_WSS=${REACT_APP_RPC_URL_WSS}
     dns:
       - 127.0.0.11
     networks:

@@ -22,8 +22,8 @@ const Navbar = () => {
  const menuRef = useRef<HTMLDivElement>(null);
  const tickerRef = useRef<HTMLParagraphElement>(null);
 
- const RPC_URL_WSS = import.meta.env.VITE_RPC_URL;
- const RPC_WSS = RPC_URL_WSS.replace('https://', 'wss://');
+ const RPC_WSS = import.meta.env.VITE_REACT_APP_RPC_URL_WSS;
+ const RPC_URL = RPC_WSS.replace('wss://', 'https://');
 
  const connection = useRef<Connection | null>(null);
  const subscriptionId = useRef<number | null>(null);
@@ -31,7 +31,7 @@ const Navbar = () => {
  const fetchBalance = useCallback(async () => {
   if (publicKey) {
     try {
-      const connection = new Connection(clusterApiUrl('devnet'));
+      const connection = new Connection(RPC_URL);
       const balance = await connection.getBalance(publicKey);
       setBalance(balance);
     } catch (error) {

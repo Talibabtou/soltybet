@@ -97,15 +97,27 @@ const AppContent: React.FC = () => {
 };
 
 const SolanaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const network = WalletAdapterNetwork.Devnet;
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  const network = WalletAdapterNetwork.Mainnet;
+  
+  // Utilisez votre RPC URL personnalisé
+  const endpoint = useMemo(() => 
+    import.meta.env.VITE_REACT_APP_RPC_URL || clusterApiUrl(network), 
+    [network]
+  );
+
   const wallets = useMemo(
     () => [new PhantomWalletAdapter(), new SolflareWalletAdapter()],
     []
   );
 
+  // Ajoutez des options de configuration
+  const connectionConfig = useMemo(() => ({
+    commitment: 'confirmed',
+    confirmTransactionInitialTimeout: 60000,
+  }), []);
+
   return (
-    <ConnectionProvider endpoint={endpoint}>
+    <ConnectionProvider endpoint={endpoint} config={connectionConfig}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
           {children}

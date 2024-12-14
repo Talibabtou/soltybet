@@ -1,7 +1,8 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_RPC_URL: string
+  readonly VITE_REACT_APP_RPC_URL: string
+  readonly VITE_REACT_APP_RPC_URL_WSS: string
   // Ajoutez ici d'autres variables d'environnement si nécessaire
 }
 

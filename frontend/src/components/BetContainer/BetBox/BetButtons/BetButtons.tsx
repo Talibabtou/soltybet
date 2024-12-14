@@ -36,37 +36,28 @@ const formatFighterName = (name: string | null): string => {
     return `${formattedName.substring(0, MAX_FIGHTER_NAME_LENGTH)}...`;
 };
 
-const getPriorityFeeEstimate = async (connection: Connection, transaction: Transaction) => {
+const getPriorityFeeEstimate = async (connection: Connection) => {
   try {
-    const serializedTransaction = transaction.serialize({
-      requireAllSignatures: false
-    }).toString('base64');
-
-    const response = await fetch(RPC_URL!, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 'helius-priority-fee',
-        method: 'getPriorityFeeEstimate',
-        params: [{
-          transaction: serializedTransaction,
-          options: {
-            priorityLevel: 'HIGH',
-            includeVote: false,
-            recommended: true
-          }
-        }]
-      })
-    });
-
-    const data = await response.json();
-    return data.result.priorityFeeEstimate;
+    const recentPriorityFees = await connection.getRecentPrioritizationFees();
+    if (!recentPriorityFees.length) {
+      console.log('Aucun frais de priorité récent trouvé, utilisation de la valeur par défaut');
+      return 10000;
+    }
+    
+    const medianPriorityFee = recentPriorityFees.reduce(
+      (a, b) => a + b.prioritizationFee, 
+      0
+    ) / recentPriorityFees.length;
+    
+    const priorityFee = Math.ceil(medianPriorityFee * 1.2); // 20% de plus pour être sûr
+    console.log(`Utilisation des frais de priorité de ${priorityFee} microLamports`);
+    return priorityFee;
   } catch (error) {
     console.error('Erreur lors de l\'estimation des frais:', error);
-    return 10000;
+    return 10000; // valeur par défaut
   }
 };
+
 
 const BetButtons = () => {
   const { 
@@ -208,12 +199,11 @@ const BetButtons = () => {
       );
       
       // Priority fee
-      const priorityFee = await getPriorityFeeEstimate(connection, transaction);
-      transaction.instructions.unshift(
-        ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports: priorityFee
-        })
-      );
+      const priorityFee = await getPriorityFeeEstimate(connection);
+      const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports: priorityFee
+      });
+      transaction.instructions.unshift(priorityFeeIx);
       const signedTransaction = await signTransaction(transaction);
       const signature = await connection.sendRawTransaction(signedTransaction.serialize());
       const confirmation = await connection.confirmTransaction({

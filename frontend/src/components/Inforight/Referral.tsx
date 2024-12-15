@@ -62,7 +62,7 @@ const Referral: React.FC = () => {
         0
       ) / recentPriorityFees.length;
       
-      const priorityFee = Math.ceil(medianPriorityFee * 1.2);
+      const priorityFee = Math.ceil(medianPriorityFee * 1.05);
       console.log(`Utilisation des frais de priorité de ${priorityFee} microLamports`);
       return priorityFee;
     } catch (error) {

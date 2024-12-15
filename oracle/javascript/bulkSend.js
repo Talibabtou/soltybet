@@ -71,13 +71,17 @@ export async function sendTransactions(connection, transactions, signers, maxRet
 				success = true;
 			} catch (error) {
 				retries++;
-				console.error(`Attempt ${retries}/${maxRetries} failed:`, error);
 				await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries)));
 			}
 		}
 	}
 
-	return transactionResults;
+	const addressToSignatureMap = {};
+	transactionResults.forEach(result => {
+		addressToSignatureMap[result.address] = result.signature;
+	});
+
+	return addressToSignatureMap;
 }
 
 export async function main(jsonData, keypairPath) {

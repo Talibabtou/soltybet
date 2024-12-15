@@ -8,7 +8,7 @@ const config = loadConfig();
 async function calculatePriorityFee(connection) {
 	const recentPriorityFees = await connection.getRecentPrioritizationFees();
 	const medianPriorityFee = recentPriorityFees.reduce((a, b) => a + b.prioritizationFee, 0) / recentPriorityFees.length;
-	const priorityFee = Math.ceil(medianPriorityFee * 1.2);
+	const priorityFee = Math.ceil(medianPriorityFee * 1.1);
 	console.log(`Using priority fee of ${priorityFee} microLamports`);
 	return priorityFee;
 }

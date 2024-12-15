@@ -50,7 +50,7 @@ export function generateTransactions(batchSize, dropList, fromWallet, priorityFe
 }
 
 export async function sendTransactions(connection, transactions, signers, maxRetries = 3) {
-	let transactionResults = {};
+	let transactionResults = [];
 
 	for (let transaction of transactions) {
 		let retries = 0;
@@ -60,11 +60,14 @@ export async function sendTransactions(connection, transactions, signers, maxRet
 			try {
 				let signature = await sendAndConfirmTransaction(connection, transaction, signers);
 				const addresses = transaction.instructions
-					.slice(1)
+					.filter(ix => ix.keys.length > 1)
 					.map(instruction => instruction.keys[1].pubkey.toBase58());
 				
 				addresses.forEach(address => {
-					transactionResults[address] = signature;
+					transactionResults.push({
+						address: address,
+						signature: signature
+					});
 				});
 				success = true;
 				console.log(`Transaction successful for addresses: ${addresses.join(', ')}`);
@@ -76,7 +79,12 @@ export async function sendTransactions(connection, transactions, signers, maxRet
 		}
 	}
 
-	return JSON.stringify(transactionResults);
+	const addressToSignatureMap = {};
+	transactionResults.forEach(result => {
+		addressToSignatureMap[result.address] = result.signature;
+	});
+
+	return addressToSignatureMap;
 }
 
 export async function main(jsonData, keypairPath) {
@@ -92,7 +100,7 @@ export async function main(jsonData, keypairPath) {
 
 		const transactionResults = await sendTransactions(connection, transactions, signers);
 		
-		return transactionResults;
+		return JSON.stringify(transactionResults);
 	} catch (error) {
 		return JSON.stringify({ error: error.message });
 	}

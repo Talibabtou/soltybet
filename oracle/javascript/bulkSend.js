@@ -50,34 +50,33 @@ export function generateTransactions(batchSize, dropList, fromWallet, priorityFe
 }
 
 export async function sendTransactions(connection, transactions, signers, maxRetries = 3) {
-	let failedTransactions = [];
-	let transactionResults = [];
+	let transactionResults = {};
 
 	for (let transaction of transactions) {
 		let retries = 0;
 		let success = false;
+		
 		while (retries < maxRetries && !success) {
 			try {
 				let signature = await sendAndConfirmTransaction(connection, transaction, signers);
-				const addresses = transaction.instructions.map(instruction => instruction.keys[1].pubkey.toBase58());
+				const addresses = transaction.instructions
+					.slice(1)
+					.map(instruction => instruction.keys[1].pubkey.toBase58());
+				
 				addresses.forEach(address => {
-					transactionResults.push({ address: address, signature: signature });
+					transactionResults[address] = signature;
 				});
 				success = true;
+				console.log(`Transaction successful for addresses: ${addresses.join(', ')}`);
 			} catch (error) {
 				retries++;
-				if (retries >= maxRetries) {
-					failedTransactions.push(transaction);
-				}
+				console.error(`Attempt ${retries}/${maxRetries} failed:`, error);
+				await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries)));
 			}
 		}
 	}
 
-	if (failedTransactions.length > 0) {
-		await sendTransactions(connection, failedTransactions, signers, maxRetries);
-	}
-
-	return transactionResults;
+	return JSON.stringify(transactionResults);
 }
 
 export async function main(jsonData, keypairPath) {
@@ -93,12 +92,7 @@ export async function main(jsonData, keypairPath) {
 
 		const transactionResults = await sendTransactions(connection, transactions, signers);
 		
-		const addressToSignatureMap = {};
-		transactionResults.forEach(result => {
-			addressToSignatureMap[result.address] = result.signature;
-		});
-
-		return JSON.stringify(addressToSignatureMap);
+		return transactionResults;
 	} catch (error) {
 		return JSON.stringify({ error: error.message });
 	}

@@ -18,8 +18,6 @@ const MAX_FIGHTER_NAME_LENGTH = 15;
 const RPC_URL = import.meta.env.VITE_REACT_APP_RPC_URL;
 
 
-//LOG DE TEST A ENLEVER
-console.log('RPC URL:', import.meta.env.VITE_REACT_APP_RPC_URL);
 
 function sighash(nameSpace: string, ixName: string): Buffer {
   const name = snakeCase(ixName);
@@ -40,7 +38,7 @@ const getPriorityFeeEstimate = async (connection: Connection) => {
   try {
     const recentPriorityFees = await connection.getRecentPrioritizationFees();
     if (!recentPriorityFees.length) {
-      console.log('Aucun frais de priorité récent trouvé, utilisation de la valeur par défaut');
+      
       return 10000;
     }
     
@@ -49,12 +47,12 @@ const getPriorityFeeEstimate = async (connection: Connection) => {
       0
     ) / recentPriorityFees.length;
     
-    const priorityFee = Math.ceil(medianPriorityFee * 1.05); // 20% de plus pour être sûr
-    console.log(`Utilisation des frais de priorité de ${priorityFee} microLamports`);
+    const priorityFee = Math.ceil(medianPriorityFee * 1.05); // 5% de plus pour être sûr
+    
     return priorityFee;
   } catch (error) {
-    console.error('Erreur lors de l\'estimation des frais:', error);
-    return 10000; // valeur par défaut
+    
+    return 10000; 
   }
 };
 
@@ -90,7 +88,7 @@ const BetButtons = () => {
   };
 
   const confirmBetOnBackend = async (b_id: string, tx_in: string, volume: number): Promise<boolean> => {
-    console.log(`Attempting to confirm bet: b_id=${b_id}, tx_in=${tx_in}, volume=${volume}`);
+    
     try {
       const response = await tokenManager.putData<Bet>('/bets/confirm_bet/', { b_id, tx_in, volume });
       console.log('Bet confirmation response:', response);
@@ -102,10 +100,10 @@ const BetButtons = () => {
   };
 
   const cancelBetOnBackend = async (b_id: string) => {
-    console.log(`Attempting to cancel bet: b_id=${b_id}`);
+    
     try {
       const response = await tokenManager.deleteData(`/bets/cancel_bet/?b_id=${b_id}`);
-      console.log('Bet cancellation response:', response);
+      
       return response;
     } catch (error) {
       console.error('Error canceling bet.');
@@ -142,14 +140,14 @@ const BetButtons = () => {
           console.error("Error trying to get referrer wallet.");
         }
       }
-      console.log('Placing bet on backend');
+      
       betResponse = await placeBetOnBackend({
         u_id: user?.u_id,
         m_id: latestMatch.m_id,
         team: color,
         volume: betAmount
       });
-      console.log('Backend bet response:', betResponse);
+      
       if (!betResponse || !betResponse.b_id) {
         throw new Error('Failed to create bet: Invalid response from server');
       }
@@ -221,10 +219,10 @@ const BetButtons = () => {
       let retries = 3;
   
       while (!confirmationSuccess && retries > 0) {
-        console.log(`Attempting to confirm bet on backend. Attempt ${4 - retries}/3`);
+        
         confirmationSuccess = await confirmBetOnBackend(betResponse.b_id, signature, betAmount);
         if (!confirmationSuccess) {
-          console.log(`Failed to confirm bet on backend. Retries left: ${retries}`);
+          
           retries--;
           if (retries > 0) {
             await new Promise(resolve => setTimeout(resolve, 2000));

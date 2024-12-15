@@ -20,7 +20,7 @@ secret_file = 'scraper_pass'
 async def update_volumes(phase, match, headers, fighter_red, fighter_blue):
     while phase["text"] == "Bets are OPEN!":
         try:
-            print(f"[DEBUG] Updating volumes for match {match['m_id']}")
+            
             await asyncio.sleep(1)
             
             response = requests.get(
@@ -33,7 +33,7 @@ async def update_volumes(phase, match, headers, fighter_red, fighter_blue):
             total_blue = data['total_blue']
             total_red = data['total_red']
             
-            print(f"[DEBUG] Volumes: Blue={total_blue}, Red={total_red}")
+            
             await send_phase(phase, fighter_red, fighter_blue, total_red, total_blue, match, headers)
             await asyncio.sleep(1)
         except Exception as e:
@@ -117,7 +117,7 @@ async def twitch_chat_listener():
                                             if fighter_red and fighter_blue:
                                                 # Utiliser get_volumes pendant la période d'attente
                                                 while (datetime.now() - lock_time).total_seconds() <= 10:
-                                                    print(f"[DEBUG] Checking volumes for match {match['m_id']}")
+                                                    
                                                     response = requests.get(
                                                         f'http://backend:8000/api/bets/get_volumes/?m_id={match["m_id"]}', 
                                                         headers=headers
@@ -125,7 +125,7 @@ async def twitch_chat_listener():
                                                     data = response.json()
                                                     total_blue = data['total_blue']
                                                     total_red = data['total_red']
-                                                    print(f"[DEBUG] Current volumes: Blue={total_blue}, Red={total_red}")
+                                                    
                                                     await send_phase(phase, fighter_red, fighter_blue, total_red, total_blue, match, headers)
                                                     
                                                     # Si c'est le dernier tour de boucle, utiliser handle_bets_locked

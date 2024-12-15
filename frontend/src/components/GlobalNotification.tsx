@@ -84,17 +84,14 @@ const GlobalNotification: React.FC = () => {
     if (shouldFetchData && payoutId && publicKey) {
       const fetchPayoutData = async () => {
         try {
-          console.log('Attempting to fetch payout data:', {
-            payoutId,
-            wallet: publicKey.toString()
-          });
+          
   
           const data = await tokenManager.getData<WinsDataResponse>('/users/actual_wins_data/', {
             m_id: payoutId,
             wallet: publicKey.toString()
           });
           
-          console.log('Full payout response from API:', data);
+          //console.log('Full payout response from API:', data);
           
           if (data.status === 'completed' && data.tx_out && data.totalPayout > 0) {
             addNotification(
@@ -121,17 +118,14 @@ const GlobalNotification: React.FC = () => {
     if (shouldFetchRefund && publicKey && latestMatch) {
       const fetchRefundData = async () => {
         try {
-          console.log('Attempting to fetch refund data:', {
-            matchId: latestMatch.m_id,
-            wallet: publicKey.toString()
-          });
+          
   
           const data = await tokenManager.getData<WinsDataResponse>('/users/actual_wins_data/', {
             m_id: latestMatch.m_id,
             wallet: publicKey.toString()
           });
           
-          console.log('Full refund response from API:', data);
+          //console.log('Full refund response from API:', data);
           
           if (data.status === 'completed' && data.tx_out && data.totalPayout > 0) {
             addNotification(

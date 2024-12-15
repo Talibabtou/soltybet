@@ -130,28 +130,27 @@ const Orderbook: React.FC = () => {
     blueFighter: latestMatch.blueFighter
   } : null;
 
-  console.log('[DEBUG] Phase:', phase);
-  console.log('[DEBUG] MatchData:', matchData);
+  
 
   const betsAreValid = matchData && 
                      !isNaN(parseFloat(matchData.total_red)) && 
                      !isNaN(parseFloat(matchData.total_blue)) && 
                      (parseFloat(matchData.total_red) > 0 && parseFloat(matchData.total_blue) > 0);
 
-  console.log('[DEBUG] betsAreValid:', betsAreValid);
-// Pour le donut, on veut l'afficher dès qu'un côté a un pari
+  
+
   const showDonutCondition = matchData && 
     phase !== 'reward' && 
     (
-      // En phase 'bet': afficher dès qu'un côté a du volume
+      
       (phase === 'bet' && 
         (parseFloat(matchData.total_red) > 0 || parseFloat(matchData.total_blue) > 0)
       ) ||
-      // En phase 'wait': afficher uniquement si les deux côtés ont du volume
+      
       (phase === 'wait' && betsAreValid)
     );
                           
-console.log('[DEBUG] showDonutCondition:', showDonutCondition);
+
 
 const showGif = 
   phase === 'reward' || 
@@ -160,16 +159,10 @@ const showGif =
    (!matchData.total_red || parseFloat(matchData.total_red) === 0) && 
    (!matchData.total_blue || parseFloat(matchData.total_blue) === 0));
 
-console.log('[DEBUG] showGif:', showGif, {
-  phase,
-  total_red: matchData?.total_red,
-  total_blue: matchData?.total_blue,
-  parsed_red: matchData ? parseFloat(matchData.total_red) : null,
-  parsed_blue: matchData ? parseFloat(matchData.total_blue) : null
-});
+
 
 const showContent = !showGif && phase !== 'reward';
-console.log('[DEBUG] showContent:', showContent);
+
 
 const data = matchData && showDonutCondition ? {
   labels: ['Blue', 'Red'],

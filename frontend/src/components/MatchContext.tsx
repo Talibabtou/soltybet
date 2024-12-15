@@ -33,7 +33,7 @@ export const MatchProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const handleMessage = (dataFromServer: WebSocketMessage) => {
       // 1. Toujours ignorer les messages de type "info"
       if (dataFromServer.type === "info") {
-        console.log('Ignoring info message in MatchContext:', dataFromServer);
+        
         return;
       }
 
@@ -41,7 +41,7 @@ export const MatchProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (dataFromServer.m_id && 
           (dataFromServer.message?.includes("Bets are OPEN") || 
            dataFromServer.message?.includes("Bets are locked"))) {
-        console.log('[DEBUG] New match or phase change:', dataFromServer);
+        
         setLatestMatch({
           m_id: dataFromServer.m_id,
           redFighter: dataFromServer.redFighter || '',
@@ -56,7 +56,7 @@ export const MatchProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (dataFromServer.m_id && 
           dataFromServer.total_red !== undefined && 
           dataFromServer.total_blue !== undefined) {
-        console.log('[DEBUG] Updating volumes for current match:', dataFromServer);
+        
         setLatestMatch(prevMatch => {
           if (prevMatch?.m_id === dataFromServer.m_id) {
             return {

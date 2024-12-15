@@ -53,7 +53,7 @@ const Referral: React.FC = () => {
     try {
       const recentPriorityFees = await connection.getRecentPrioritizationFees();
       if (!recentPriorityFees.length) {
-        console.log('Aucun frais de priorité récent trouvé, utilisation de la valeur par défaut');
+        
         return 10000;
       }
       
@@ -63,7 +63,7 @@ const Referral: React.FC = () => {
       ) / recentPriorityFees.length;
       
       const priorityFee = Math.ceil(medianPriorityFee * 1.05);
-      console.log(`Utilisation des frais de priorité de ${priorityFee} microLamports`);
+      
       return priorityFee;
     } catch (error) {
       console.error('Erreur lors de l\'estimation des frais:', error);

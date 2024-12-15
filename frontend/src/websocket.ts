@@ -32,12 +32,12 @@ const resetReconnectAttempts = () => {
 
 const connectWebSocket = async (onMessage: (data: any) => void): Promise<WebSocket> => {
   if (isConnecting) {
-    console.log('WebSocket connection already in progress');
+    
     return socket!;
   }
 
   if (socket && socket.readyState === WebSocket.OPEN) {
-    console.log('WebSocket already connected');
+    
     return socket;
   }
 
@@ -46,18 +46,18 @@ const connectWebSocket = async (onMessage: (data: any) => void): Promise<WebSock
   try {
     const token = await getWsToken();
     const wsUrl = `wss://solty.bet/ws/phase/?token=${token}`;
-    console.log('Connecting to WebSocket URL:', wsUrl);
+    
 
     socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {
-      console.log('WebSocket connected successfully');
+      
       isConnecting = false;
       resetReconnectAttempts();
     };
 
     socket.onmessage = (event) => {
-      console.log('WebSocket message received:', event.data);
+      
       const data = JSON.parse(event.data);
       onMessage(data);
     };

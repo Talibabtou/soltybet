@@ -54,7 +54,10 @@ def process_payouts(bets_df, config):
 			timeout=30
 		)
 		json_output = result.stdout.strip()
-		logger.info(f"Received transaction results: {json_output}")
+		logger.info(f"Raw output received: '{json_output}'")
+		logger.info(f"Output type: {type(json_output)}")
+		logger.info(f"Output length: {len(json_output)}")
+		
 		if not json_output:
 			logger.error("Error: No output from JavaScript execution.")
 			return

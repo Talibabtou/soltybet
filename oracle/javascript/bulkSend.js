@@ -70,7 +70,6 @@ export async function sendTransactions(connection, transactions, signers, maxRet
 					});
 				});
 				success = true;
-				console.log(`Transaction successful for addresses: ${addresses.join(', ')}`);
 			} catch (error) {
 				retries++;
 				console.error(`Attempt ${retries}/${maxRetries} failed:`, error);
@@ -79,12 +78,7 @@ export async function sendTransactions(connection, transactions, signers, maxRet
 		}
 	}
 
-	const addressToSignatureMap = {};
-	transactionResults.forEach(result => {
-		addressToSignatureMap[result.address] = result.signature;
-	});
-
-	return addressToSignatureMap;
+	return transactionResults;
 }
 
 export async function main(jsonData, keypairPath) {

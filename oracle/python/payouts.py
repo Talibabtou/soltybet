@@ -42,12 +42,10 @@ def process_payouts(bets_df, config):
 	if bets_df.empty:
 		logger.debug("No bets to process for payouts.")
 		return
-	
 	json_data = parse_payouts(bets_df, config)
 	if not json_data:
 		logger.error("Error: JSON data is empty or malformed.")
 		return
-	
 	try:
 		result = subprocess.run(
 			['node', 'javascript/bulkSend.js', json_data, config['oracle_wallet']], 
@@ -55,14 +53,11 @@ def process_payouts(bets_df, config):
 			text=True,
 			timeout=30
 		)
-		
 		json_output = result.stdout.strip()
 		logger.info(f"Received transaction results: {json_output}")
-		
 		if not json_output:
 			logger.error("Error: No output from JavaScript execution.")
 			return
-			
 		try:
 			transaction_results = json.loads(json_output)
 			if isinstance(transaction_results, dict):
@@ -72,7 +67,6 @@ def process_payouts(bets_df, config):
 				logger.error(f"Invalid transaction results format: {json_output}")
 		except json.JSONDecodeError as e:
 			logger.error(f"Failed to parse transaction results: {e}")
-			
 	except subprocess.TimeoutExpired:
 		logger.error("Bulk send operation timed out after 5 minutes")
 	except Exception as e:

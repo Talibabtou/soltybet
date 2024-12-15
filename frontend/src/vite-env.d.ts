@@ -3,6 +3,7 @@
 interface ImportMetaEnv {
   readonly VITE_REACT_APP_RPC_URL: string
   readonly VITE_REACT_APP_RPC_URL_WSS: string
+  readonly VITE_REACT_APP_ENCRYPTION_KEY: string
   // Ajoutez ici d'autres variables d'environnement si nécessaire
 }
 

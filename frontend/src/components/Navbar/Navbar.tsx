@@ -11,7 +11,7 @@ const Navbar = () => {
  const [balance, setBalance] = useState(0);
  const [isMenuOpen, setIsMenuOpen] = useState(false);
  const [newsTexts] = useState([
-   "Solty Bet Launch in v0.9, Feel free to share your feedback on discord",
+   "Solty Bet Launch on Mainnet, Join our discord to know the next game session",
    "Join our Discord community!",
    "Follow us on Twitter @SoltyBet for the latest news and announcements."
  ]);

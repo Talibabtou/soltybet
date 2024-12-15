@@ -49,7 +49,7 @@ const getPriorityFeeEstimate = async (connection: Connection) => {
       0
     ) / recentPriorityFees.length;
     
-    const priorityFee = Math.ceil(medianPriorityFee * 1.2); // 20% de plus pour être sûr
+    const priorityFee = Math.ceil(medianPriorityFee * 1.05); // 20% de plus pour être sûr
     console.log(`Utilisation des frais de priorité de ${priorityFee} microLamports`);
     return priorityFee;
   } catch (error) {

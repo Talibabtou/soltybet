@@ -54,10 +54,6 @@ def process_payouts(bets_df, config):
 			timeout=30
 		)
 		json_output = result.stdout.strip()
-		logger.info(f"Raw output received: '{json_output}'")
-		logger.info(f"Output type: {type(json_output)}")
-		logger.info(f"Output length: {len(json_output)}")
-		
 		if not json_output:
 			logger.error("Error: No output from JavaScript execution.")
 			return
@@ -71,6 +67,6 @@ def process_payouts(bets_df, config):
 		except json.JSONDecodeError as e:
 			logger.error(f"Failed to parse transaction results: {e}")
 	except subprocess.TimeoutExpired:
-		logger.error("Bulk send operation timed out after 5 minutes")
+		logger.error("Bulk send operation timed out after 30 seconds")
 	except Exception as e:
 		logger.error(f"Unexpected error during payout processing: {str(e)}")

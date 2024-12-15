@@ -86,13 +86,23 @@ async def handle_phase(phase_text: str, context: MatchContext, sync_time: bool):
 
 async def handle_bets_open(context: MatchContext):
 	"""Handle the bets open phase."""
-	if context.bets_df is not None and not context.bets_df.empty:
-		logger.warning("Unresolved bets from previous match detected. Refunding...")
-		await handle_invalid_match(context)
-	context.bets_df = None
-	context.invalid_match = False
-	context.block_ids[0] = get_current_block_id()
-	set_gate_state("open", context.config)
+	try:
+		if context.bets_df is not None and not context.bets_df.empty:
+			logger.warning("Unresolved bets from previous match detected. Processing refunds...")
+			context.invalid_match = True
+			processed_bets = compute_payouts(context.bets_df, None, is_invalid=True)
+			logger.info(f"Processed refunds for {len(processed_bets)} unresolved bets")
+			await handle_invalid_match(context)
+			if not processed_bets.empty:
+				logger.info("Successfully processed refunds for previous match")
+	except Exception as e:
+		logger.error(f"Error handling unresolved bets: {str(e)}")
+		raise
+	finally:
+		context.bets_df = None
+		context.invalid_match = False
+		context.block_ids[0] = get_current_block_id()
+		set_gate_state("open", context.config)
 
 async def handle_bets_locked(context: MatchContext):
 	"""Handle the bets locked phase."""
@@ -117,23 +127,9 @@ async def handle_match_over(phase_text: str, context: MatchContext):
 		return await handle_invalid_match(context)
 	
 	context.bets_df = compute_payouts(context.bets_df, winning_team, context.invalid_match)
-	logger.info("Payouts computed, bets_df state before processing:\n%s", context.bets_df)
-	
 	process_payouts(context.bets_df, context.config)
-	logger.info("Payouts processed, bets_df state after bulk send:\n%s", context.bets_df)
-	
-	save_last_match(context.bets_df, context.invalid_match)
-	logger.info("Last match saved, checking last_match.json content...")
-	try:
-		with open('history/last_match.json', 'r') as f:
-			last_match_content = f.read()
-			logger.info("Last match content: %s", last_match_content)
-	except Exception as e:
-		logger.error("Failed to read last_match.json: %s", e)
-	
 	save_match_history(context.bets_df, context.invalid_match)
-	logger.info("Match history saved")
-	
+
 	context.bets_df = None
 
 async def handle_invalid_match(context: MatchContext):
@@ -142,25 +138,11 @@ async def handle_invalid_match(context: MatchContext):
 	if context.bets_df is None:
 		logger.debug("No bets to process for invalid match.")
 		return
-	
 	context.bets_df['payout'] = context.bets_df['initial_amount_bet']
-	logger.info("Invalid match payouts set, bets_df state before processing:\n%s", context.bets_df)
-	
 	process_payouts(context.bets_df, context.config)
-	logger.info("Invalid match payouts processed, bets_df state after bulk send:\n%s", context.bets_df)
-	
 	save_last_match(context.bets_df, context.invalid_match)
-	logger.info("Invalid match last_match saved, checking content...")
-	try:
-		with open('history/last_match.json', 'r') as f:
-			last_match_content = f.read()
-			logger.info("Last match content: %s", last_match_content)
-	except Exception as e:
-		logger.error("Failed to read last_match.json: %s", e)
-	
 	save_match_history(context.bets_df, context.invalid_match)
-	logger.info("Invalid match history saved")
-	
+
 	context.bets_df = None
 
 async def main():

@@ -31,22 +31,35 @@ async def send_phase(phase, fighter_red, fighter_blue, total_red, total_blue, ma
         send_to_discord(f"message: Websocket: {e}")
 
 async def send_info(info, m_id, headers):
-    response = requests.post('http://backend:8000/api/ws_token/', headers=headers)
-    single_use_token = response.json().get('token')
-    ws_url = f"wss://solty.bet/ws/phase/?token={single_use_token}"
-    message = {
-        "type": "info",
-        "text": info,
-        "m_id": m_id,
-    }
+    print(f"Starting send_info with info: {info}, m_id: {m_id}")
     try:
+        response = requests.post('http://backend:8000/api/ws_token/', headers=headers)
+        print(f"Token response status: {response.status_code}")
+        single_use_token = response.json().get('token')
+        print(f"Got token: {single_use_token[:10]}...")
+        
+        ws_url = f"wss://solty.bet/ws/phase/?token={single_use_token}"
+        print(f"Connecting to websocket: {ws_url}")
+        
+        message = {
+            "type": "info",
+            "text": info,
+            "m_id": m_id,
+        }
+        print(f"Preparing to send message: {json.dumps(message)}")
+        
         async with websockets.connect(
             ws_url,
             additional_headers={"Origin": "http://scraper"}
         ) as websocket:
+            print("WebSocket connected")
             await websocket.send(json.dumps(message))
+            print("Message sent")
             response = await websocket.recv()
+            print(f"Received response: {response}")
+            
     except Exception as e:
+        print(f"Error in send_info: {e}")
         send_to_discord(f"message: Websocket: {e}")
 
 def send_to_discord(payload):

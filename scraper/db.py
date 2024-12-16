@@ -114,6 +114,9 @@ def handle_payout(headers, match, info):
             if not os.path.exists(file_path) or os.path.getsize(file_path) == 0:
                 time.sleep(0.5)
                 continue
+
+            time.sleep(1)
+
             with open(file_path, 'r') as file:
                 data = json.load(file)
             

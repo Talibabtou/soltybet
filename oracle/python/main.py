@@ -128,6 +128,7 @@ async def handle_match_over(phase_text: str, context: MatchContext):
 	
 	context.bets_df = compute_payouts(context.bets_df, winning_team, context.invalid_match)
 	process_payouts(context.bets_df, context.config)
+	save_last_match(context.bets_df, context.invalid_match)
 	save_match_history(context.bets_df, context.invalid_match)
 
 	context.bets_df = None

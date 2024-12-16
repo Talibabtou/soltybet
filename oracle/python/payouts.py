@@ -51,7 +51,7 @@ def process_payouts(bets_df, config):
 			['node', 'javascript/bulkSend.js', json_data, config['oracle_wallet']], 
 			capture_output=True, 
 			text=True,
-			timeout=30
+			timeout=60
 		)
 		json_output = result.stdout.strip()
 		if not json_output:
@@ -67,6 +67,6 @@ def process_payouts(bets_df, config):
 		except json.JSONDecodeError as e:
 			logger.error(f"Failed to parse transaction results: {e}")
 	except subprocess.TimeoutExpired:
-		logger.error("Bulk send operation timed out after 30 seconds")
+		logger.error("Bulk send operation timed out after 60 seconds")
 	except Exception as e:
 		logger.error(f"Unexpected error during payout processing: {str(e)}")

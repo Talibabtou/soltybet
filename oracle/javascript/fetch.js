@@ -20,9 +20,14 @@ async function fetchTransactionsWithinBlocks(startBlock, endBlock) {
 	try {
 		let signatures = [];
 		let before = undefined;
-		const limit = 10;
+		const limit = 50;
+		
+		// Fetch signatures silently
 		while (true) {
-			const fetchedSignatures = await connection.getSignaturesForAddress(oracleWallet, { before, limit });
+			const fetchedSignatures = await fetchWithRetry(async () => {
+				return await connection.getSignaturesForAddress(oracleWallet, { before, limit });
+			});
+			
 			if (fetchedSignatures.length === 0) break;
 			signatures = signatures.concat(fetchedSignatures);
 			before = fetchedSignatures[fetchedSignatures.length - 1].signature;
@@ -31,60 +36,77 @@ async function fetchTransactionsWithinBlocks(startBlock, endBlock) {
 
 		const transactions = await Promise.all(
 			signatures.map(async (signatureInfo) => {
-				const transaction = await connection.getTransaction(signatureInfo.signature, {
-					maxSupportedTransactionVersion: 0
+				return await fetchWithRetry(async () => {
+					const tx = await connection.getTransaction(signatureInfo.signature, {
+						maxSupportedTransactionVersion: 0
+					});
+					if (!tx) {
+						return null; // Silent fail instead of throwing
+					}
+					return tx;
 				});
-				return transaction;
 			})
 		);
 
-		const filteredTransactions = transactions.filter(tx => tx && tx.slot >= startBlock && tx.slot <= endBlock);
+		const filteredTransactions = transactions
+			.filter(tx => tx && tx.slot >= startBlock && tx.slot <= endBlock)
+			.filter(tx => tx.transaction && tx.transaction.message && tx.meta);
 
 		const bets = filteredTransactions
 			.map((tx) => {
-				const message = tx.transaction.message;
-				const meta = tx.meta;
+				try {
+					const message = tx.transaction.message;
+					const meta = tx.meta;
 
-				const hasCheckGateInstruction = meta.logMessages.some(
-					(log) => log.includes('Instruction: CheckGate')
-				);
+					if (!message || !message.accountKeys || !meta) {
+						return null;
+					}
 
-				const memo = meta.logMessages.find(
-					(log) => log.includes('Memo (len')
-				);
-				let memoData = null;
-				if (memo) {
-					const memoContent = memo.match(/Memo \(len \d+\): "(.*)"/);
-					if (memoContent && memoContent[1]) {
-						try {
-							const unescapedMemo = memoContent[1].replace(/\\"/g, '"');
-							memoData = JSON.parse(unescapedMemo);
-						} catch (e) {
-							console.error('Failed to parse memo:', e);
+					const hasCheckGateInstruction = meta.logMessages.some(
+						(log) => log.includes('Instruction: CheckGate')
+					);
+
+					const memo = meta.logMessages.find(
+						(log) => log.includes('Memo (len')
+					);
+					let memoData = null;
+					if (memo) {
+						const memoContent = memo.match(/Memo \(len \d+\): "(.*)"/);
+						if (memoContent && memoContent[1]) {
+							try {
+								const unescapedMemo = memoContent[1].replace(/\\"/g, '"');
+								memoData = JSON.parse(unescapedMemo);
+							} catch (e) {
+								return null;
+							}
 						}
 					}
-				}
 
-				const oracleWalletIndex = message.accountKeys.findIndex((accountKey) => accountKey.equals(oracleWallet));
-				const balanceIncreased = meta.postBalances[oracleWalletIndex] > meta.preBalances[oracleWalletIndex];
+					const oracleWalletIndex = message.accountKeys.findIndex((accountKey) => accountKey.equals(oracleWallet));
+					if (oracleWalletIndex === -1) {
+						return null;
+					}
 
-				if (hasCheckGateInstruction && memoData && balanceIncreased) {
-					const userAddress = message.accountKeys[0].toBase58();
-					const initialAmountBet = (meta.postBalances[oracleWalletIndex] - meta.preBalances[oracleWalletIndex]) / 1e9;
-					const bet = {
-						bet_id: memoData.b_id,
-						user_address: userAddress,
-						initial_amount_bet: initialAmountBet,
-						team: memoData.color,
-						referrer_address: memoData['referrerWallet'] || null
-					};
-					return bet;
+					const balanceIncreased = meta.postBalances[oracleWalletIndex] > meta.preBalances[oracleWalletIndex];
+
+					if (hasCheckGateInstruction && memoData && balanceIncreased) {
+						return {
+							bet_id: memoData.b_id,
+							user_address: message.accountKeys[0].toBase58(),
+							initial_amount_bet: (meta.postBalances[oracleWalletIndex] - meta.preBalances[oracleWalletIndex]) / 1e9,
+							team: memoData.color,
+							referrer_address: memoData['referrerWallet'] || null
+						};
+					}
+					return null;
+				} catch (error) {
+					return null;
 				}
-				return null;
 			})
 			.filter((bet) => bet !== null);
 
-		return JSON.stringify(bets, null, 2);
+		// Only output the final JSON result
+		return JSON.stringify(bets);
 	} catch (error) {
 		return JSON.stringify({ error: error.message });
 	}

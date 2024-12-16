@@ -107,7 +107,7 @@ async def handle_bets_open(context: MatchContext):
 async def handle_bets_locked(context: MatchContext):
 	"""Handle the bets locked phase."""
 	set_gate_state("close", context.config)
-	context.block_ids[1] = get_current_block_id()
+	context.block_ids[1] = get_current_block_id() + 5
 	context.bets_df = load_bets(context.block_ids[0], context.block_ids[1])
 	if context.bets_df is None or context.bets_df.empty:
 		context.bets_df = None

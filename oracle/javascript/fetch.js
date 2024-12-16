@@ -12,6 +12,21 @@ const loadKeypair = (path) => {
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 100;
+
+async function fetchWithRetry(fn, retries = MAX_RETRIES) {
+	try {
+		return await fn();
+	} catch (error) {
+		if (retries > 0) {
+			await sleep(RETRY_DELAY);
+			return fetchWithRetry(fn, retries - 1);
+		}
+		throw error;
+	}
+}
+
 async function fetchTransactionsWithinBlocks(startBlock, endBlock) {
 	const connection = new Connection(config.rpc_url, 'confirmed');
 	const oracleKeypair = loadKeypair(config.oracle_wallet);
@@ -21,8 +36,7 @@ async function fetchTransactionsWithinBlocks(startBlock, endBlock) {
 		let signatures = [];
 		let before = undefined;
 		const limit = 50;
-		
-		// Fetch signatures silently
+
 		while (true) {
 			const fetchedSignatures = await fetchWithRetry(async () => {
 				return await connection.getSignaturesForAddress(oracleWallet, { before, limit });
@@ -41,7 +55,7 @@ async function fetchTransactionsWithinBlocks(startBlock, endBlock) {
 						maxSupportedTransactionVersion: 0
 					});
 					if (!tx) {
-						return null; // Silent fail instead of throwing
+						return null;
 					}
 					return tx;
 				});
@@ -105,7 +119,6 @@ async function fetchTransactionsWithinBlocks(startBlock, endBlock) {
 			})
 			.filter((bet) => bet !== null);
 
-		// Only output the final JSON result
 		return JSON.stringify(bets);
 	} catch (error) {
 		return JSON.stringify({ error: error.message });

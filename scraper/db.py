@@ -62,7 +62,7 @@ def handle_bets_locked(headers, match):
     try:
         m_id = match["m_id"]
         print(f"Retrieving volumes for match {m_id}")
-        time.sleep(1)  # Cette ligne avait une mauvaise indentation
+        time.sleep(1)
         response = requests.get(f'http://backend:8000/api/bets/bets_volume/?m_id={m_id}', headers=headers)
         response.raise_for_status()
         data = response.json()

@@ -116,7 +116,7 @@ async def twitch_chat_listener():
                                             
                                             if fighter_red and fighter_blue:
                                                 # Utiliser get_volumes pendant la période d'attente
-                                                while (datetime.now() - lock_time).total_seconds() <= 10:
+                                                while (datetime.now() - lock_time).total_seconds() <= 15:
                                                     
                                                     response = requests.get(
                                                         f'http://backend:8000/api/bets/get_volumes/?m_id={match["m_id"]}', 

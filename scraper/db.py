@@ -11,7 +11,7 @@ from decimal import Decimal
 def clear_file(file_path):
 	try:
 		os.remove(file_path)
-		print(f"File {file_path} has been deleted.")
+		#print(f"File {file_path} has been deleted.")
 	except FileNotFoundError:
 		print(f"File {file_path} not found.")
 	except PermissionError:
@@ -61,7 +61,6 @@ def handle_bets_open(red_fighter, blue_fighter, headers):
 def handle_bets_locked(headers, match):
     try:
         m_id = match["m_id"]
-        print(f"Retrieving volumes for match {m_id}")
         time.sleep(1)
         response = requests.get(f'http://backend:8000/api/bets/bets_volume/?m_id={m_id}', headers=headers)
         response.raise_for_status()
@@ -71,10 +70,6 @@ def handle_bets_locked(headers, match):
         total_blue = data['total_blue']
         total_bets = data['debug_info']['total_bets']
         
-        print(f"Match {m_id} stats:")
-        print(f"- Total bets: {total_bets}")
-        print(f"- Red volume: {total_red}")
-        print(f"- Blue volume: {total_blue}")
         
         return total_red, total_blue
         
@@ -120,8 +115,6 @@ def handle_payout(headers, match, info):
             with open(file_path, 'r') as file:
                 data = json.load(file)
             
-            # Ajout de logs pour déboguer
-            print("Loaded data from file:", json.dumps(data, indent=2))
             
             if not data or not isinstance(data, list):
                 time.sleep(0.5)
@@ -151,7 +144,7 @@ def handle_payout(headers, match, info):
             # Ajout d'un délai entre les requêtes
             time.sleep(0.5)
             
-            print("Sending user payout data:", json.dumps(data, indent=2))
+            
             user_response = requests.put(
                 'http://backend:8000/api/users/user_payout/',
                 json=data, 

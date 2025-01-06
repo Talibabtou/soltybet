@@ -16,7 +16,7 @@ def calculate_house_fee(row):
 
 def compute_bets(bets_df: pd.DataFrame):
 	"""Process bets to apply referrer royalties and calculate contribution rates."""
-	logger.info("compute_bets: %s", bets_df)
+	#logger.info("compute_bets: %s", bets_df)
 	if bets_df.empty:
 		return bets_df, False
 	bets_df['amount_bet'] = bets_df['initial_amount_bet']

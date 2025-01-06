@@ -325,9 +325,9 @@ class UserViewSet(BaseViewSet, mixins.UpdateModelMixin):
                                     referrer.referral_gain += royalty
                                     referrer.save()
                                     
-                                    print(f"Referral gain processed for {bet_data['referrer_address']}: +{royalty} SOL")
+                                    #print(f"Referral gain processed for {bet_data['referrer_address']}: +{royalty} SOL")
                                 except User.DoesNotExist:
-                                    print(f"Referrer not found: {bet_data['referrer_address']}")
+                                    #print(f"Referrer not found: {bet_data['referrer_address']}")
                                     continue
 
                             if not bet_data['invalid_match']:
@@ -335,10 +335,10 @@ class UserViewSet(BaseViewSet, mixins.UpdateModelMixin):
                                 total_gain += payout
                             total_payout += payout
 
-                        print(f"Processing user {user_address}:")
-                        print(f"- Volume: +{total_volume} SOL")
-                        print(f"- Gain: +{total_gain} SOL")
-                        print(f"- Payout: +{total_payout} SOL")
+                        #print(f"Processing user {user_address}:")
+                        #print(f"- Volume: +{total_volume} SOL")
+                        #print(f"- Gain: +{total_gain} SOL")
+                        #print(f"- Payout: +{total_payout} SOL")
 
                         # Mise à jour des totaux de l'utilisateur
                         user.total_volume += total_volume

@@ -101,6 +101,18 @@ services:
     hostname: backend
     environment:
       - LOGS_DIR=/app/logs
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1    
+      - DAPHNE_VERBOSITY=0        # Réduit la verbosité de Daphne
+      - DJANGO_LOG_LEVEL=ERROR    # Une seule fois, en ERROR
+      - DAPHNE_LOG_LEVEL=ERROR    # Pour Daphne
+      - CHANNELS_LOG_LEVEL=ERROR  # Pour Channels
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"    # Limite chaque fichier de log à 10MB
+        max-file: "3"      # Garde seulement 3 fichiers de log
+        compress: "true"   # Compresse les vieux logs
 
   scraper: #good
     image: localhost:5742/scraper:0.0.1
@@ -169,6 +181,9 @@ services:
       - REACT_APP_API_PASSWORD=${REACT_APP_API_PASSWORD}
       - REACT_APP_RPC_URL=${REACT_APP_RPC_URL}
       - REACT_APP_RPC_URL_WSS=${REACT_APP_RPC_URL_WSS}
+      - NGINX_WORKER_CONNECTIONS=2048
+      - NGINX_WORKER_RLIMIT_NOFILE=20000
+      
     dns:
       - 127.0.0.11
     networks:
@@ -187,6 +202,12 @@ services:
         delay: 5s
         max_attempts: 3
         window: 120s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
   
   redis:
     image: redis:7.4-alpine

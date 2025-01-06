@@ -99,7 +99,7 @@ const GlobalNotification: React.FC = () => {
           
           if (data.status === 'completed' && data.tx_out && data.totalPayout > 0) {
             addNotification(
-              `${data.totalPayout.toFixed(2)} SOL`,
+              `${data.totalPayout.toFixed(3)} SOL`,
               '#3BD825',
               'payout',
               data.tx_out

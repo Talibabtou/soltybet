@@ -184,83 +184,63 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
-        'simple': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
-        },
+        'minimal': {
+            'format': '%(levelname)s %(message)s'
+        }
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-            'level': 'DEBUG',
+            'formatter': 'minimal',
+            'level': 'WARNING',
         },
         'file': {
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(LOGS_DIR, 'error.log'),
-            'formatter': 'simple',
-            'level': 'ERROR',
+            'formatter': 'minimal',
+            'level': 'WARNING',
+            'maxBytes': 10485760,
+            'backupCount': 3,
+        },
+        'null': {
+            'class': 'logging.NullHandler',  # Nouveau handler qui ignore tous les logs
         },
         'webhook_info': {
-            'level': 'INFO',
+            'level': 'WARNING',
             'class': 'backend.webhook_handler.WebhookHandler',
             'webhook_url': discord_hooks.get('info', {}).get('hook', ''),
-            'formatter': 'simple',
+            'formatter': 'minimal',  # Changé 'simple' en 'minimal'
         },
         'webhook_warning': {
             'level': 'WARNING',
             'class': 'backend.webhook_handler.WebhookHandler',
             'webhook_url': discord_hooks.get('warning', {}).get('hook', ''),
-            'formatter': 'simple',
+            'formatter': 'minimal',  # Changé 'simple' en 'minimal'
         },
         'webhook_error': {
             'level': 'ERROR',
             'class': 'backend.webhook_handler.WebhookHandler',
             'webhook_url': discord_hooks.get('error', {}).get('hook', ''),
-            'formatter': 'simple',
-        },
+            'formatter': 'minimal',
+        }
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file', 'webhook_info', 'webhook_warning', 'webhook_error'],
-            'level': 'INFO',
+            'handlers': ['file'],
+            'level': 'ERROR',
             'propagate': False,
         },
-        'django.request': {
-            'handlers': ['console', 'file', 'webhook_info', 'webhook_warning', 'webhook_error'],
-            'level': 'INFO',
+        'channels': {
+            'handlers': ['file'],
+            'level': 'ERROR',
             'propagate': False,
         },
         'backend': {
-            'handlers': ['console', 'file', 'webhook_info', 'webhook_warning', 'webhook_error'],
-            'level': 'INFO',
+            'handlers': ['file', 'webhook_error'],
+            'level': 'ERROR',
             'propagate': False,
-        },
-        'datalog': {
-            'handlers': ['console', 'webhook_error'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        '': {
-            'handlers': ['file', 'console', 'webhook_warning', 'webhook_error'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'jwt_auth': {
-            'handlers': ['console', 'file', 'webhook_warning', 'webhook_error'],
-            'level': 'WARNING',
-            'propagate': False,
-        },
-    },
-    'root': {
-        'handlers': ['file', 'console', 'webhook_warning', 'webhook_error'],
-        'level': 'WARNING',
-        'propagate': False,
-    },
+        }
+    }
 }
 
 ASGI_APPLICATION = 'backend.asgi.application'

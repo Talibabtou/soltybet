@@ -91,7 +91,7 @@ async def handle_bets_open(context: MatchContext):
 			logger.warning("Unresolved bets from previous match detected. Processing refunds...")
 			context.invalid_match = True
 			processed_bets = compute_payouts(context.bets_df, None, is_invalid=True)
-			logger.info(f"Processed refunds for {len(processed_bets)} unresolved bets")
+			#logger.info(f"Processed refunds for {len(processed_bets)} unresolved bets")
 			await handle_invalid_match(context)
 			if not processed_bets.empty:
 				logger.info("Successfully processed refunds for previous match")

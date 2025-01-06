@@ -57,7 +57,6 @@ const Sidebar: React.FC = () => {
             pnl: (item.gain || 0) - (volumeItem?.volume || 0)
           };
         })
-        .filter(item => item.pnl !== 0)
         .sort((a, b) => b.pnl - a.pnl)
         .slice(0, 10);
       

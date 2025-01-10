@@ -21,6 +21,15 @@ interface UserStats {
   referral_gain?: number; 
 }
 
+interface CachedData {
+  volume: DataItem[];
+  gain: DataItem[];
+  timestamp: number;
+}
+
+const CACHE_KEY = 'sidebar_data';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 const Sidebar: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'volume' | 'gain' | 'user'>('volume');
   const [data, setData] = useState<{ volume: DataItem[]; gain: DataItem[] }>({ volume: [], gain: [] });
@@ -28,15 +37,36 @@ const Sidebar: React.FC = () => {
   const { user } = useContext(UserContext);
   const { shouldFetchData, setShouldFetchData, shouldFetchRefund, setShouldFetchRefund } = useContext(PhaseContext);
 
+  const getCachedData = (): CachedData | null => {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return null;
+    
+    const parsedCache = JSON.parse(cached);
+    if (Date.now() - parsedCache.timestamp > CACHE_DURATION) {
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    return parsedCache;
+  };
 
   const fetchTopData = useCallback(async () => {
     try {
+      // D'abord vérifier le cache au premier chargement
+      const cachedData = getCachedData();
+      if (cachedData) {
+        setData({
+          volume: cachedData.volume,
+          gain: cachedData.gain
+        });
+        return; // Sortir si on a des données en cache
+      }
+
       const [volumeData, gainData] = await Promise.all([
         tokenManager.getData<DataItem[]>('/users/top_volume/'),
         tokenManager.getData<DataItem[]>('/users/top_gain/')
       ]);
       
-      // Pour le tableau Volume
+      // Traitement des données comme avant
       const topVolume = volumeData
         .filter(item => (item.volume || 0) > 0)
         .map(item => ({
@@ -46,7 +76,6 @@ const Sidebar: React.FC = () => {
         .sort((a, b) => b.volume - a.volume)
         .slice(0, 10);
       
-      // Pour le tableau PnL
       const pnlData = gainData
         .map(item => {
           const volumeItem = volumeData.find(v => v.wallet === item.wallet);
@@ -59,6 +88,15 @@ const Sidebar: React.FC = () => {
         })
         .sort((a, b) => b.pnl - a.pnl)
         .slice(0, 10);
+      
+      const newData = {
+        volume: topVolume,
+        gain: pnlData,
+        timestamp: Date.now()
+      };
+
+      // Sauvegarder dans le cache
+      localStorage.setItem(CACHE_KEY, JSON.stringify(newData));
       
       setData({
         volume: topVolume,
@@ -95,21 +133,17 @@ const Sidebar: React.FC = () => {
 
   useEffect(() => {
     if (shouldFetchData || shouldFetchRefund) {
-      
-      
+      // Forcer le rafraîchissement des données en ignorant le cache
+      localStorage.removeItem(CACHE_KEY);
       const fetchData = async () => {
-        
-        
         await fetchTopData();
         if (user) {
           await fetchUserStats();
         }
-        
       };
-  
       fetchData();
     }
-  }, [shouldFetchData, shouldFetchRefund, fetchTopData, fetchUserStats, user, setShouldFetchData, setShouldFetchRefund]);
+  }, [shouldFetchData, shouldFetchRefund, fetchTopData, fetchUserStats, user]);
 
 
   const renderUserStats = () => {

@@ -33,6 +33,7 @@ const createTokenManager = () => {
   let encryptedJwtToken: string | null = null;
   let encryptedJwtRefreshToken: string | null = null;
   let cachedJwtToken: string | null = null;
+  let tokenPromise: Promise<string> | null = null;
 
   const ENCRYPTION_KEY = import.meta.env.VITE_REACT_APP_ENCRYPTION_KEY;
 
@@ -119,20 +120,36 @@ const createTokenManager = () => {
   const API_PASSWORD = import.meta.env.VITE_REACT_APP_API_PASSWORD;
   return {
     getToken: async (): Promise<string> => {
+      if (tokenPromise) {
+        return tokenPromise;
+      }
+
+      if (isAuthenticated && encryptedJwtToken) {
+        return getDecryptedToken();
+      }
+
       try {
-        const response = await api.post('/token/', {
-          username: 'front',
-          password: API_PASSWORD
-        });
-        if (response.status === 200) {
-          encryptedJwtToken = encryptToken(response.data.access);
-          encryptedJwtRefreshToken = encryptToken(response.data.refresh);
-          isAuthenticated = true;
-          return getDecryptedToken();
-        }
-        throw new Error('Authentication failed');
+        tokenPromise = (async () => {
+          const response = await api.post('/token/', {
+            username: 'front',
+            password: API_PASSWORD
+          });
+
+          if (response.status === 200) {
+            encryptedJwtToken = encryptToken(response.data.access);
+            encryptedJwtRefreshToken = encryptToken(response.data.refresh);
+            isAuthenticated = true;
+            return getDecryptedToken();
+          }
+          throw new Error('Authentication failed');
+        })();
+
+        const token = await tokenPromise;
+        tokenPromise = null;
+        return token;
       } catch (error) {
-        console.error('Error getting token.');
+        tokenPromise = null;
+        console.error('Error getting token:', error);
         throw error;
       }
     },

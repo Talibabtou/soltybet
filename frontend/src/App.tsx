@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect, useState, Suspense, lazy } from 'react';
 import { ConnectionProvider, WalletProvider, useWallet } from "@solana/wallet-adapter-react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
@@ -7,17 +7,12 @@ import { clusterApiUrl } from "@solana/web3.js";
 import { User, tokenManager } from './api';
 import Navbar from './components/Navbar/Navbar';
 import Content from './components/Content/Content';
-import Sidebar from './components/Sidebar/Sidebar';
-import Chat from './components/Chat/Chat';
-import Orderbook from './components/OrderBook/Orderbook';
-import Inforight from './components/Inforight/Inforight';
-import BetContainer from './components/BetContainer/Betcontainer';
 import Popup from './components/popup';
+import { UserBetProvider } from './components/UserBetContext';
 import { PhaseProvider } from './components/PhaseContext';
 import { MatchProvider } from './components/MatchContext';
 import { TransactionProvider } from './components/TxContext';
 import GlobalNotification from './components/GlobalNotification';
-import { UserBetProvider } from './components/UserBetContext';
 import { WebSocketProvider } from './components/WebSocketContext';
 
 import "./App.css";
@@ -28,6 +23,13 @@ export const UserContext = React.createContext<{
   refreshUser: () => Promise<void>;
   
 }>({ user: null, refreshUser: async () => {} });
+
+// Lazy loading des composants non-critiques
+const Sidebar = lazy(() => import('./components/Sidebar/Sidebar'));
+const Chat = lazy(() => import('./components/Chat/Chat'));
+const Orderbook = lazy(() => import('./components/OrderBook/Orderbook'));
+const Inforight = lazy(() => import('./components/Inforight/Inforight'));
+const BetContainer = lazy(() => import('./components/BetContainer/Betcontainer'));
 
 const AppContent: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -74,22 +76,28 @@ const AppContent: React.FC = () => {
       </div>
       <div className="app-content">
         <UserContext.Provider value={{ user, refreshUser }}>
-          
           <div className="app">
             <Navbar />
             <div className="main-content">
-              <Sidebar />
+              <Suspense fallback={<div>Loading...</div>}>
+                <Sidebar />
+              </Suspense>
               <Content />
-              <Chat />
+              <Suspense fallback={<div>Loading...</div>}>
+                <Chat />
+              </Suspense>
             </div>
             <div className="betcontent">
-              <Orderbook />
-              <BetContainer />
+              <Suspense fallback={<div>Loading...</div>}>
+                <>
+                  <Orderbook />
+                  <BetContainer />
+                  <Inforight />
+                </>
+              </Suspense>
               <GlobalNotification />
-              <Inforight />
             </div>
           </div>
-          
         </UserContext.Provider>
       </div>
     </>
@@ -141,7 +149,6 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <WebSocketProvider>
       <UserBetProvider>
         <PhaseProvider>
           <MatchProvider>
@@ -154,7 +161,6 @@ const App: React.FC = () => {
           </MatchProvider>
         </PhaseProvider>
       </UserBetProvider>
-    </WebSocketProvider>
   );
 };
 

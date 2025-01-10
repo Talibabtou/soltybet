@@ -149,7 +149,36 @@ const Navbar = () => {
           <span className="question-mark">?</span>
           <div className="tooltip">
             <h3>How to Play</h3>
-            <p>Coming soon...</p>
+            <div className="tooltip-content">
+              <p className="intro">
+                Just bet on which fighter you think will win the match, Red or Blue.
+              </p>
+              
+              <h4>Match Types:</h4>
+              
+              <div className="match-type">
+                <span className="match-title">🎯 Matchmaking</span>
+                <p>The most fair format: two fighters from the same tier compete in a Best of 3.</p>
+              </div>
+
+              <div className="match-type">
+                <span className="match-title">🎪 Exhibition</span>
+                <p>Special requested matches that can be unbalanced:</p>
+                <ul>
+                  <li>Formats: 1v1, 2v2, 3v3, 1v2, 1v3, 2v3</li>
+                  <li>Victory condition: Best of 3 or Best of 5</li>
+                </ul>
+              </div>
+
+              <div className="match-type">
+                <span className="match-title">🏆 Tournament</span>
+                <p>Fighters from one tier compete in a tournament:</p>
+                <ul>
+                  <li>Regular matches: Best of 3 or Best of 5</li>
+                  <li>Finals: Best of 9</li>
+                </ul>
+              </div>
+            </div>
           </div>
      </div>
        {connected && (

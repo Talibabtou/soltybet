@@ -76,6 +76,10 @@ th, td {
   font-weight: bold;
 }
 
+.history-table td.refund {
+  color: #2596be;
+}
+
 
 @media screen and (max-height: 830px) {
   .contentside {

@@ -230,20 +230,23 @@ const Sidebar: React.FC = () => {
         </tr>
       </thead>
       <tbody>
-        {history.map((bet, index) => (
-          <tr key={index}>
-            <td>{bet.b_id}</td>
-            <td className={`team-${bet.team}`}>
-              {bet.volume.toFixed(2)} SOL
-            </td>
-            <td style={{ color: bet.won ? '#4CAF50' : '#f44336' }}>
-              {bet.won ? 'Won' : 'Lost'}
-            </td>
-            <td className={bet.won ? 'payout' : ''}>
-              {bet.won ? `${bet.payout?.toFixed(3)} SOL` : '/'}
-            </td>
-          </tr>
-        ))}
+        {history.map((bet, index) => {
+          const isRefund = bet.payout === bet.volume;
+          return (
+            <tr key={index}>
+              <td>{bet.b_id}</td>
+              <td className={`team-${bet.team}`}>
+                {bet.volume.toFixed(2)} SOL
+              </td>
+              <td style={{ color: isRefund ? '#FFA500' : bet.won ? '#4CAF50' : '#f44336' }}>
+                {isRefund ? 'Refund' : bet.won ? 'Won' : 'Lost'}
+              </td>
+              <td className={bet.won && !isRefund ? 'payout' : ''}>
+                {isRefund ? `${bet.volume.toFixed(2)} SOL` : bet.won ? `${bet.payout?.toFixed(2)} SOL` : '/'}
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );

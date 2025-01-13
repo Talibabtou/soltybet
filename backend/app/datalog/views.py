@@ -731,6 +731,7 @@ class BetViewSet(BaseViewSet, mixins.UpdateModelMixin):
             bets = Bet.objects.filter(
                 u_id=user,
                 success_in=True
+                
             ).order_by('-creation_date')[:10]
 
             data = [{

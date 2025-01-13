@@ -51,7 +51,7 @@ const BetInput = () => {
         max={100}
         step={0.01}
         className={placeholderClass}
-        title="You can bet Between 0.05 to 100 SOL"
+        title="You can bet Between 0.01 to 100 SOL"
       />
     </div>
  );

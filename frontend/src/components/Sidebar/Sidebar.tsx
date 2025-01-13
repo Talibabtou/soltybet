@@ -27,13 +27,23 @@ interface CachedData {
   timestamp: number;
 }
 
+interface HistoryData {
+  b_id: string;
+  team: string;
+  volume: number;
+  won: boolean;
+  payout: number | null;
+  date: string;
+}
+
 const CACHE_KEY = 'sidebar_data';
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 const Sidebar: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'volume' | 'gain' | 'user'>('volume');
+  const [activeTab, setActiveTab] = useState<'volume' | 'gain' | 'user' | 'history'>('volume');
   const [data, setData] = useState<{ volume: DataItem[]; gain: DataItem[] }>({ volume: [], gain: [] });
   const [userStats, setUserStats] = useState<UserStats>({ volume: 0, gain: 0, nbBets: 0 });
+  const [history, setHistory] = useState<HistoryData[]>([]);
   const { user } = useContext(UserContext);
   const { shouldFetchData, setShouldFetchData, shouldFetchRefund, setShouldFetchRefund } = useContext(PhaseContext);
 
@@ -118,6 +128,17 @@ const Sidebar: React.FC = () => {
     }
   }, [user]);
 
+  const fetchHistory = useCallback(async () => {
+    if (user && activeTab === 'history') {
+      try {
+        const historyData = await tokenManager.getData<HistoryData[]>(`/bets/bet_history/?wallet=${user.wallet}`);
+        setHistory(historyData);
+      } catch (error) {
+        console.error("Error while fetching history:", error);
+      }
+    }
+  }, [user, activeTab]);
+
   useEffect(() => {
     fetchTopData();
   }, [fetchTopData]);
@@ -132,19 +153,29 @@ const Sidebar: React.FC = () => {
   }, [user, fetchUserStats]);
 
   useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
+
+  useEffect(() => {
     if (shouldFetchData || shouldFetchRefund) {
-      // Forcer le rafraîchissement des données en ignorant le cache
       localStorage.removeItem(CACHE_KEY);
       const fetchData = async () => {
         await fetchTopData();
         if (user) {
           await fetchUserStats();
+          if (activeTab === 'history') {
+            await fetchHistory();
+          }
         }
       };
       fetchData();
     }
-  }, [shouldFetchData, shouldFetchRefund, fetchTopData, fetchUserStats, user]);
+  }, [shouldFetchData, shouldFetchRefund, fetchTopData, fetchUserStats, fetchHistory, user, activeTab]);
 
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
 
   const renderUserStats = () => {
     const profit = (userStats.gain || 0) - (userStats.total_volume || 0);
@@ -188,12 +219,46 @@ const Sidebar: React.FC = () => {
     );
   };
 
+  const renderHistory = () => (
+    <table className="history-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Volume</th>
+          <th>Result</th>
+          <th>Payout</th>
+        </tr>
+      </thead>
+      <tbody>
+        {history.map((bet, index) => (
+          <tr key={index}>
+            <td>{bet.b_id}</td>
+            <td className={`team-${bet.team}`}>
+              {bet.volume.toFixed(2)} SOL
+            </td>
+            <td style={{ color: bet.won ? '#4CAF50' : '#f44336' }}>
+              {bet.won ? 'Won' : 'Lost'}
+            </td>
+            <td className={bet.won ? 'payout' : ''}>
+              {bet.won ? `${bet.payout?.toFixed(3)} SOL` : '/'}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
   return (
     <div className='sidebar'>
       <div className='tabs'>
         <button onClick={() => setActiveTab('volume')}>Volume</button>
         <button onClick={() => setActiveTab('PnL')}>PnL</button>
-        {user && <button onClick={() => setActiveTab('user')}>My Stats</button>}
+        {user && (
+          <>
+            <button onClick={() => setActiveTab('user')}>My Stats</button>
+            <button onClick={() => setActiveTab('history')}>History</button>
+          </>
+        )}
       </div>
       <div className='contentside'>
         {activeTab === 'volume' && (
@@ -238,6 +303,7 @@ const Sidebar: React.FC = () => {
           </table>
         )}
         {activeTab === 'user' && user && renderUserStats()}
+        {activeTab === 'history' && user && renderHistory()}
       </div>
     </div>
   );

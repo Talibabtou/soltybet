@@ -54,6 +54,29 @@ th, td {
   width: 50%;
 }
 
+
+.history-table td.team-red {
+  color: #ff6969;
+}
+
+.history-table td.team-blue {
+  color: #6767ff;
+}
+
+.history-table td.win {
+  color: #4CAF50;
+}
+
+.history-table td.lose {
+  color: #f44336;
+}
+
+.history-table td.payout {
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+
 @media screen and (max-height: 830px) {
   .contentside {
     font-size: 14px;
@@ -82,4 +105,25 @@ th, td {
     font-size: 12px; 
     padding: 3px 8px;
   }
+}
+
+.team-red {
+  color: #ff6969;
+}
+
+.team-blue {
+  color: #6767ff;
+}
+
+.win {
+  color: #4CAF50;
+}
+
+.lose {
+  color: #f44336;
+}
+
+.payout {
+  color: #4CAF50;
+  font-weight: bold;
 }

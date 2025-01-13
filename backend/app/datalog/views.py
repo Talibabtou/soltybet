@@ -425,7 +425,11 @@ class UserViewSet(BaseViewSet, mixins.UpdateModelMixin):
                 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
+
+
+
+    
+
 class MatchViewSet(BaseViewSet, mixins.UpdateModelMixin):
     queryset = Match.objects.all()
     serializer_class = MatchSerializer
@@ -712,6 +716,41 @@ class BetViewSet(BaseViewSet, mixins.UpdateModelMixin):
         except Exception as e:
             return Response({'error': f"An unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 
+
+    @action(detail=False, methods=['get'])
+    def bet_history(self, request):
+        if request.user.username.strip() != 'front':
+            raise PermissionDenied("API permission denied")
+        
+        wallet = request.query_params.get('wallet')
+        if not wallet:
+            return Response({'error': 'wallet is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(wallet=wallet)
+            bets = Bet.objects.filter(
+                u_id=user,
+                success_in=True
+            ).order_by('-creation_date')[:10]
+
+            data = [{
+                'b_id': str(bet.b_id)[:4],  # Tronqué
+                'team': bet.team,
+                'volume': float(bet.volume),
+                'won': bet.payout > 0,
+                'payout': float(bet.payout) if bet.payout > 0 else None,
+                'date': bet.creation_date
+            } for bet in bets]
+            
+            return Response(data)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
 class FighterViewSet(BaseViewSet, mixins.UpdateModelMixin):
     queryset = Fighter.objects.all()
     serializer_class = FighterSerializer

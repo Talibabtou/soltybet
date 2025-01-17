@@ -33,6 +33,7 @@ interface HistoryData {
   volume: number;
   won: boolean;
   payout: number | null;
+  invalid_match: boolean | null;
   date: string;
 }
 
@@ -231,7 +232,7 @@ const Sidebar: React.FC = () => {
       </thead>
       <tbody>
         {history.map((bet, index) => {
-          const isRefund = bet.payout === bet.volume;
+          const isRefund = bet.invalid_match;
           return (
             <tr key={index}>
               <td>{bet.b_id}</td>
@@ -242,7 +243,7 @@ const Sidebar: React.FC = () => {
                 {isRefund ? 'Refund' : bet.won ? 'Won' : 'Lost'}
               </td>
               <td className={bet.won && !isRefund ? 'payout' : ''}>
-                {isRefund ? `${bet.volume.toFixed(2)} SOL` : bet.won ? `${bet.payout?.toFixed(2)} SOL` : '/'}
+                {isRefund ? `${bet.volume.toFixed(2)} SOL` : bet.won ? `${bet.payout?.toFixed(3)} SOL` : '/'}
               </td>
             </tr>
           );

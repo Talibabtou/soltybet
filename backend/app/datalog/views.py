@@ -740,6 +740,7 @@ class BetViewSet(BaseViewSet, mixins.UpdateModelMixin):
                 'volume': float(bet.volume),
                 'won': bet.payout > 0,
                 'payout': float(bet.payout) if bet.payout > 0 else None,
+                'invalid_match': bet.invalid_match,
                 'date': bet.creation_date
             } for bet in bets]
             

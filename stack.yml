@@ -34,16 +34,18 @@ services:
     env_file:
       - .env
     environment:
-      - POSTGRES_PASSWORD_FILE=/run/secrets/db_pass
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_MAIL}
+      - SCRIPT_NAME=/pgadmin
+      - PGADMIN_DEFAULT_EMAIL=solty@bet.com
       - PGADMIN_DEFAULT_PASSWORD_FILE=/run/secrets/pgadmin_pass
+      - PGADMIN_CONFIG_SERVER_MODE=True
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+      - PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION=False
+      - PGADMIN_CONFIG_LOGIN_BANNER="Unauthorized access is prohibited"
     secrets:
       - pgadmin_pass
-    ports:
-      - "5050:80"
     volumes:
       - swarm_pgadmin:/var/lib/pgadmin
-      - ./pgadmin_servers.json:/pgadmin4/servers.json
+      - ./pgadmin_servers.json:/pgadmin4/servers.json:ro
     networks:
       - solty
     deploy:

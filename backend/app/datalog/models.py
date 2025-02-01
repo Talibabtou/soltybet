@@ -11,7 +11,7 @@ class User(models.Model):
     total_gain = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     ref_id = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL)
     ref_code = models.CharField(max_length=20, unique=True, null=True, blank=True)
-    referral_gain = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    referral_gain = models.DecimalField(max_digits=12, decimal_places=4, default=0)
     country_code = models.CharField(max_length=2, default='zz')
     last_login = models.DateTimeField(default=timezone.now)
     creation_date = models.DateTimeField(default=timezone.now)
@@ -71,7 +71,7 @@ class Bet(models.Model):
     tx_out = models.CharField(max_length=1232, null=True, blank=True)
     success_out = models.BooleanField(null=True, blank=True)
     volume = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    payout = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    payout = models.DecimalField(max_digits=12, decimal_places=4, default=0)
     invalid_match = models.BooleanField(null=True, blank=True, default=None)
     creation_date = models.DateTimeField(default=timezone.now)
 

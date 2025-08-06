@@ -1,0 +1,40 @@
+{
+  "name": "soltybet-deposit-gate",
+  "version": "2.0.0",
+  "description": "SoltyBet Deposit Gate Smart Contract Operations",
+  "main": "src/gate-client.ts",
+  "scripts": {
+    "build": "anchor build",
+    "test": "anchor test",
+    "gate": "ts-node tests/gate-operations.ts",
+    "gate:check": "ts-node tests/gate-operations.ts check",
+    "gate:open": "ts-node tests/gate-operations.ts open",
+    "gate:close": "ts-node tests/gate-operations.ts close",
+    "gate:toggle": "ts-node tests/gate-operations.ts toggle",
+    "deploy": "ts-node tests/deploy-and-init.ts",
+    "verify": "anchor verify"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.30.1",
+    "@solana/web3.js": "^1.95.2",
+    "dotenv": "^16.4.7",
+    "bs58": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "typescript": "^5.6.2",
+    "ts-node": "^10.9.2",
+    "@types/mocha": "^10.0.7",
+    "mocha": "^10.7.3",
+    "chai": "^4.3.10"
+  },
+  "keywords": [
+    "solana",
+    "anchor",
+    "blockchain",
+    "betting",
+    "soltybet"
+  ],
+  "author": "SoltyBet Team",
+  "license": "MIT"
+}
